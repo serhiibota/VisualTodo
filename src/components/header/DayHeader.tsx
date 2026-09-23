@@ -18,6 +18,12 @@ export function DayHeader() {
   const openSheet = usePlannerStore((s) => s.openSheet);
   const isToday = selectedDate === todayKey();
 
+  const inboxCount = useMemo(() => {
+    let n = 0;
+    for (const id in tasks) if (tasks[id].date === null && !tasks[id].done) n++;
+    return n;
+  }, [tasks]);
+
   const { total, done } = useMemo(() => {
     let total = 0;
     let done = 0;
@@ -53,6 +59,19 @@ export function DayHeader() {
               Сегодня
             </button>
           )}
+          <button
+            type="button"
+            aria-label={"Входящие: " + inboxCount}
+            onClick={() => openSheet({ kind: "inbox" })}
+            className="relative flex h-9 w-9 items-center justify-center rounded-full bg-hover text-graphite active:bg-line"
+          >
+            <Icon name="inbox" size={19} />
+            {inboxCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold tabular-nums text-white">
+                {inboxCount}
+              </span>
+            )}
+          </button>
           <button
             type="button"
             aria-label="Проекты и теги"

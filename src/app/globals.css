@@ -106,44 +106,53 @@ body {
     -webkit-transform: translate3d(0, 0, 0);
   }
 
-  /* ---------- Таймлайн ---------- */
+  /* ---------- Нить дня ---------- */
 
-  .grid-half {
-    height: 0;
-    border-top: 1px dashed #efece6;
+  /* Нить проходит через центр колонки капсул: 42px (время) + 62px / 2 */
+  .spine {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 72px;
+    width: 2px;
+    pointer-events: none;
+  }
+  .spine-solid {
+    background: #e3dfd8;
+  }
+  /* Пунктир градиентом — один слой, без десятков DOM-узлов */
+  .spine-dashed {
+    background-image: repeating-linear-gradient(to bottom, #d6d2ca 0 4px, transparent 4px 9px);
+  }
+  .spine-fade {
+    bottom: 50%;
+    background-image: repeating-linear-gradient(to bottom, #d6d2ca 0 4px, transparent 4px 9px);
   }
 
-  .task-slot {
+  .flow-row {
     transition: opacity 250ms ease;
-    contain: layout style;
   }
 
-  .task-card {
-    touch-action: pan-y; /* вертикаль — браузеру, горизонталь — нашему свайпу */
+  .flow-body {
+    touch-action: pan-y; /* вертикаль — браузеру, горизонталь — свайпу «готово» */
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
     cursor: pointer;
-    transition:
-      transform 260ms cubic-bezier(0.32, 0.72, 0, 1),
-      opacity 250ms ease;
+    transition: transform 260ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .flow-body:active {
+    opacity: 0.8;
   }
 
-  .task-card:active {
-    opacity: 0.85;
+  /* Заливка капсулы меняется раз в 30 с или по чекбоксу — плавно */
+  .pill-fill {
+    transition: height 450ms cubic-bezier(0.32, 0.72, 0, 1);
   }
 
-  /* Выполненная задача «затухает» */
-  .task-card.is-done {
-    opacity: 0.45;
-  }
-  .task-card.is-done .task-title {
+  .task-title.is-done {
     text-decoration: line-through;
     text-decoration-thickness: 1px;
-  }
-
-  .now-line {
-    will-change: transform;
   }
 
   .progress-fill {
@@ -176,7 +185,8 @@ body {
 
   @media (prefers-reduced-motion: reduce) {
     .sheet-panel,
-    .task-card,
+    .flow-body,
+    .pill-fill,
     .progress-fill {
       transition-duration: 1ms;
     }

@@ -3,13 +3,17 @@
 import { useEffect, useState } from "react";
 import { BottomSheet } from "@/components/sheet/BottomSheet";
 import { Icon } from "@/components/ui/Icon";
-import { DAY_END } from "@/lib/constants";
-import { PALETTE } from "@/lib/palette";
+import { TaskPill } from "@/components/timeline/TaskPill";
+import { TaskIcon } from "@/components/ui/TaskIcon";
+import { DAY_END, DEFAULT_START, pillHeight } from "@/lib/constants";
+import { COLOR_KEYS, PALETTE } from "@/lib/palette";
+import { guessIcon, TASK_ICON_KEYS } from "@/lib/taskIcons";
 import { formatClock, formatDuration, parseClock } from "@/lib/time";
 import { usePlannerStore } from "@/store/usePlannerStore";
 import type { SheetState, TaskDraft } from "@/store/types";
 import { DurationPicker } from "./DurationPicker";
 import { LinksEditor } from "./LinksEditor";
+import { SubtasksEditor } from "./SubtasksEditor";
 
 const Label = ({ children }: { children: React.ReactNode }) => (
   <div className="mb-2 mt-5 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{children}</div>
@@ -27,7 +31,7 @@ export function TaskSheet() {
   if (open && sheet !== current) setCurrent(sheet);
 
   return (
-    <BottomSheet open={open} onClose={closeSheet} title={current && !current.taskId ? "Новый блок" : "Блок"}>
+    <BottomSheet open={open} onClose={closeSheet} title={current && !current.taskId ? (current.inbox ? "Во входящие" : "Новый блок") : "Блок"}>
       {current && <TaskForm key={current.taskId ?? "new-" + (current.start ?? 0)} sheet={current} />}
     </BottomSheet>
   );
@@ -49,16 +53,22 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
       ? { ...existing }
       : {
           title: "",
-          date: selectedDate,
-          start: sheet.start ?? 9 * 60,
-          duration: 60,
+          date: sheet.inbox ? null : selectedDate,
+          start: sheet.start ?? DEFAULT_START,
+          duration: 30,
+          icon: "dot",
+          color: COLOR_KEYS[Object.keys(tasks).length % COLOR_KEYS.length],
           description: "",
+          subtasks: [],
           links: [],
           tagIds: [],
           projectId: activeProjectId,
           done: false,
         }
   );
+  // Иконка подбирается по названию, пока пользователь не выбрал её сам
+  const [iconTouched, setIconTouched] = useState(!!existing);
+  const [iconsOpen, setIconsOpen] = useState(false);
 
   // Задачу удалили извне — закрываемся
   useEffect(() => {
@@ -66,8 +76,10 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
   }, [taskId, existing, closeSheet]);
 
   const patch = (p: Partial<TaskDraft>) => setDraft((d) => ({ ...d, ...p }));
-  const maxDuration = DAY_END - draft.start;
+  const inInbox = draft.date === null;
+  const maxDuration = inInbox ? DAY_END : DAY_END - draft.start;
   const canSave = draft.title.trim().length > 0;
+  const swatch = PALETTE[draft.color] ?? PALETTE.mist;
 
   const save = () => {
     if (!canSave) return;
@@ -75,6 +87,7 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
       ...draft,
       title: draft.title.trim(),
       duration: Math.max(5, Math.min(draft.duration, maxDuration)),
+      subtasks: draft.subtasks.filter((st) => st.title.trim()),
     };
     if (taskId) updateTask(taskId, clean);
     else addTask(clean);
@@ -99,13 +112,77 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
         save();
       }}
     >
-      <input
-        value={draft.title}
-        onChange={(e) => patch({ title: e.target.value })}
-        placeholder="Что планируете?"
-        enterKeyHint="done"
-        className="mt-1 w-full border-b border-line bg-transparent pb-2 text-[20px] font-semibold tracking-[-0.01em] text-ink placeholder:font-normal placeholder:text-faint"
-      />
+      {/* Капсула-превью + название */}
+      <div className="mt-1 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setIconsOpen((v) => !v)}
+          aria-label="Выбрать иконку"
+          className="shrink-0"
+        >
+          <TaskPill icon={draft.icon} swatch={swatch} height={Math.min(pillHeight(draft.duration), 84)} fill={draft.done ? 1 : 0} />
+        </button>
+        <input
+          value={draft.title}
+          onChange={(e) => {
+            const title = e.target.value;
+            patch(iconTouched ? { title } : { title, icon: guessIcon(title) });
+          }}
+          placeholder="Что планируете?"
+          enterKeyHint="done"
+          className="min-w-0 flex-1 border-b border-line bg-transparent pb-2 text-[20px] font-semibold tracking-[-0.01em] text-ink placeholder:font-normal placeholder:text-faint"
+        />
+      </div>
+
+      {/* Цвет — всегда на виду, иконки — по тапу на капсулу */}
+      <div className="mt-4 flex items-center justify-between">
+        {COLOR_KEYS.map((key) => (
+          <button
+            key={key}
+            type="button"
+            aria-label={PALETTE[key].label}
+            aria-pressed={draft.color === key}
+            onClick={() => patch({ color: key })}
+            className="tap-expand relative flex h-8 w-8 items-center justify-center rounded-full"
+            style={{ backgroundColor: PALETTE[key].solid }}
+          >
+            {draft.color === key && <Icon name="check" size={16} strokeWidth={2.4} className="text-white" />}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => setIconsOpen((v) => !v)}
+          aria-expanded={iconsOpen}
+          className="flex h-8 items-center gap-1 rounded-full bg-hover px-2.5 text-[13px] text-graphite"
+        >
+          <TaskIcon name={draft.icon} size={16} />
+          <Icon name={iconsOpen ? "chevronUp" : "chevronDown"} size={14} />
+        </button>
+      </div>
+
+      {iconsOpen && (
+        <div className="mt-3 grid grid-cols-7 gap-1.5 rounded-2xl bg-hover p-2">
+          {TASK_ICON_KEYS.map((key) => {
+            const on = draft.icon === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={on}
+                aria-label={key}
+                onClick={() => {
+                  patch({ icon: key });
+                  setIconTouched(true);
+                }}
+                className="flex h-10 items-center justify-center rounded-xl"
+                style={{ backgroundColor: on ? swatch.solid : "transparent" }}
+              >
+                <TaskIcon name={key} size={20} color={on ? "#FFFFFF" : "#3A3936"} />
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {taskId && (
         <button
@@ -113,39 +190,69 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
           onClick={() => patch({ done: !draft.done })}
           className={
             "mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-2xl text-[15px] font-medium transition-colors duration-200 " +
-            (draft.done ? "bg-ink text-milk" : "bg-hover text-graphite")
+            (draft.done ? "text-white" : "bg-hover text-graphite")
           }
+          style={draft.done ? { backgroundColor: swatch.solid } : undefined}
         >
           <Icon name="check" size={18} strokeWidth={2} />
           {draft.done ? "Выполнено" : "Отметить выполненным"}
         </button>
       )}
 
-      <Label>Время</Label>
-      <div className="flex items-center gap-3">
-        <label className="flex h-11 flex-1 items-center justify-between rounded-2xl bg-hover px-4">
-          <span className="text-[13px] text-muted">Начало</span>
-          <input
-            type="time"
-            step={300}
-            value={formatClock(draft.start)}
-            onChange={(e) => {
-              const v = parseClock(e.target.value);
-              if (v !== null) patch({ start: v, duration: Math.min(draft.duration, DAY_END - v) });
-            }}
-            className="bg-transparent text-right text-[16px] font-semibold tabular-nums text-ink"
-          />
-        </label>
-        <div className="flex h-11 flex-1 items-center justify-between rounded-2xl bg-hover px-4">
-          <span className="text-[13px] text-muted">Конец</span>
-          <span className="text-[16px] font-semibold tabular-nums text-ink">
-            {formatClock(Math.min(draft.start + draft.duration, DAY_END))}
-          </span>
-        </div>
+      <Label>Когда</Label>
+      <div className="grid grid-cols-2 gap-1 rounded-2xl bg-hover p-1">
+        {[
+          { on: !inInbox, label: "В плане дня", click: () => patch({ date: existing?.date ?? selectedDate }) },
+          { on: inInbox, label: "Во входящие", click: () => patch({ date: null }) },
+        ].map((o) => (
+          <button
+            key={o.label}
+            type="button"
+            onClick={o.click}
+            aria-pressed={o.on}
+            className={
+              "h-9 rounded-xl text-[14px] transition-colors duration-200 " +
+              (o.on ? "bg-paper font-medium text-ink shadow-[0_1px_3px_rgba(35,34,32,0.12)]" : "text-muted")
+            }
+          >
+            {o.label}
+          </button>
+        ))}
       </div>
+
+      {!inInbox && (
+        <div className="mt-2 flex items-center gap-2">
+          <label className="flex h-11 flex-1 items-center justify-between rounded-2xl bg-hover px-4">
+            <span className="text-[13px] text-muted">Начало</span>
+            <input
+              type="time"
+              step={300}
+              value={formatClock(draft.start)}
+              onChange={(e) => {
+                const v = parseClock(e.target.value);
+                if (v !== null) patch({ start: v, duration: Math.min(draft.duration, DAY_END - v) });
+              }}
+              className="bg-transparent text-right text-[16px] font-semibold tabular-nums text-ink"
+            />
+          </label>
+          <div className="flex h-11 flex-1 items-center justify-between rounded-2xl bg-hover px-4">
+            <span className="text-[13px] text-muted">Конец</span>
+            <span className="text-[16px] font-semibold tabular-nums text-ink">
+              {formatClock(Math.min(draft.start + draft.duration, DAY_END))}
+            </span>
+          </div>
+        </div>
+      )}
 
       <Label>Длительность · {formatDuration(draft.duration)}</Label>
       <DurationPicker value={draft.duration} max={maxDuration} onChange={(duration) => patch({ duration })} />
+
+      <Label>Подзадачи</Label>
+      <SubtasksEditor
+        subtasks={draft.subtasks}
+        color={swatch.solid}
+        onChange={(subtasks) => patch({ subtasks })}
+      />
 
       {projects.length > 0 && (
         <>
@@ -155,7 +262,7 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
               Без проекта
             </Chip>
             {projects.map((p) => (
-              <Chip key={p.id} on={draft.projectId === p.id} dot={PALETTE[p.color].accent} onClick={() => patch({ projectId: p.id })}>
+              <Chip key={p.id} on={draft.projectId === p.id} dot={PALETTE[p.color].solid} onClick={() => patch({ projectId: p.id })}>
                 {p.name}
               </Chip>
             ))}
@@ -168,7 +275,7 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
           <Label>Теги</Label>
           <div className="flex flex-wrap gap-1.5">
             {tags.map((t) => (
-              <Chip key={t.id} on={draft.tagIds.includes(t.id)} dot={PALETTE[t.color].accent} onClick={() => toggleTag(t.id)}>
+              <Chip key={t.id} on={draft.tagIds.includes(t.id)} dot={PALETTE[t.color].solid} onClick={() => toggleTag(t.id)}>
                 {t.name}
               </Chip>
             ))}
@@ -176,11 +283,11 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
         </>
       )}
 
-      <Label>Описание</Label>
+      <Label>Заметки</Label>
       <textarea
         value={draft.description}
         onChange={(e) => patch({ description: e.target.value })}
-        placeholder="Детали, чек-лист, мысли…"
+        placeholder="Детали, мысли…"
         rows={3}
         className="w-full resize-none rounded-2xl bg-hover px-4 py-3 text-[16px] leading-6 text-ink placeholder:text-faint"
       />
@@ -205,7 +312,7 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
           disabled={!canSave}
           className="h-12 flex-1 rounded-2xl bg-ink text-[16px] font-semibold text-milk transition-opacity duration-200 disabled:opacity-30"
         >
-          {taskId ? "Сохранить" : "Добавить в план"}
+          {taskId ? "Сохранить" : inInbox ? "Во входящие" : "Добавить в план"}
         </button>
       </div>
     </form>

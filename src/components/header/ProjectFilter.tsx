@@ -31,7 +31,7 @@ export function ProjectFilter() {
             onClick={() => setActive(on ? null : p.id)}
             className={chip + (on ? "bg-ink text-milk" : "bg-hover text-graphite")}
           >
-            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: PALETTE[p.color].accent }} />
+            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: PALETTE[p.color].solid }} />
             <span className="max-w-[140px] truncate">{p.name}</span>
           </button>
         );

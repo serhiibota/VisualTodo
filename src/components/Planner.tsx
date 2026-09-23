@@ -1,6 +1,7 @@
 "use client";
 
 import { DayHeader } from "@/components/header/DayHeader";
+import { InboxSheet } from "@/components/inbox/InboxSheet";
 import { ProjectsSheet } from "@/components/projects/ProjectsSheet";
 import { TaskSheet } from "@/components/task/TaskSheet";
 import { Timeline } from "@/components/timeline/Timeline";
@@ -8,7 +9,8 @@ import { Icon } from "@/components/ui/Icon";
 import { useAppHeight } from "@/hooks/useAppHeight";
 import { useHydrated } from "@/hooks/useHydrated";
 import { minutesNow, todayKey } from "@/lib/time";
-import { DAY_END, DAY_START, SNAP_MIN } from "@/lib/constants";
+import { DAY_END, DEFAULT_START, SNAP_MIN } from "@/lib/constants";
+import { findFreeSlot } from "@/lib/flow";
 import { usePlannerStore } from "@/store/usePlannerStore";
 
 export function Planner() {
@@ -24,6 +26,7 @@ export function Planner() {
           <AddButton />
           <TaskSheet />
           <ProjectsSheet />
+          <InboxSheet />
         </>
       ) : (
         <Skeleton />
@@ -37,12 +40,11 @@ function AddButton() {
   const selectedDate = usePlannerStore((s) => s.selectedDate);
 
   const onClick = () => {
-    // Сегодня — ближайшие 15 минут от «сейчас», в другие дни — 09:00
-    let start = 9 * 60;
-    if (selectedDate === todayKey()) {
-      start = Math.ceil(minutesNow() / SNAP_MIN) * SNAP_MIN;
-      start = Math.min(DAY_END - SNAP_MIN, Math.max(DAY_START, start));
-    }
+    // Первое свободное окно: сегодня — от текущего момента, иначе — с 09:00
+    const { tasks } = usePlannerStore.getState();
+    const day = Object.values(tasks).filter((t) => t.date === selectedDate);
+    const from = selectedDate === todayKey() ? Math.max(minutesNow(), 6 * 60) : DEFAULT_START;
+    const start = Math.min(DAY_END - SNAP_MIN, findFreeSlot(day, 30, from));
     openSheet({ kind: "task", taskId: null, start });
   };
 

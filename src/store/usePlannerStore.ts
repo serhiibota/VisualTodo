@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { STORAGE_KEY } from "@/lib/constants";
 import { uid } from "@/lib/id";
+import { guessIcon } from "@/lib/taskIcons";
 import { todayKey } from "@/lib/time";
 import { createSeed } from "./seed";
 import type { ColorKey, Project, SheetState, Tag, Task, TaskDraft } from "./types";
@@ -31,6 +32,8 @@ interface Actions {
   addTask: (draft: TaskDraft) => string;
   updateTask: (id: string, patch: Partial<TaskDraft>) => void;
   toggleTask: (id: string) => void;
+  toggleSubtask: (taskId: string, subtaskId: string) => void;
+  scheduleTask: (id: string, date: string, start: number) => void;
   removeTask: (id: string) => void;
 
   addProject: (name: string, color: ColorKey) => void;
@@ -45,6 +48,16 @@ interface Actions {
 }
 
 export type PlannerState = PersistedState & UiState & Actions;
+
+const patchTask = (
+  s: PlannerState,
+  id: string,
+  fn: (t: Task) => Task
+): Partial<PlannerState> | PlannerState => {
+  const prev = s.tasks[id];
+  if (!prev) return s;
+  return { tasks: { ...s.tasks, [id]: fn(prev) } };
+};
 
 export const usePlannerStore = create<PlannerState>()(
   persist(
@@ -69,18 +82,16 @@ export const usePlannerStore = create<PlannerState>()(
         set((s) => ({ tasks: { ...s.tasks, [id]: { ...draft, id } } }));
         return id;
       },
-      updateTask: (id, patch) =>
-        set((s) => {
-          const prev = s.tasks[id];
-          if (!prev) return s;
-          return { tasks: { ...s.tasks, [id]: { ...prev, ...patch } } };
-        }),
-      toggleTask: (id) =>
-        set((s) => {
-          const prev = s.tasks[id];
-          if (!prev) return s;
-          return { tasks: { ...s.tasks, [id]: { ...prev, done: !prev.done } } };
-        }),
+      updateTask: (id, patch) => set((s) => patchTask(s, id, (t) => ({ ...t, ...patch }))),
+      toggleTask: (id) => set((s) => patchTask(s, id, (t) => ({ ...t, done: !t.done }))),
+      toggleSubtask: (taskId, subtaskId) =>
+        set((s) =>
+          patchTask(s, taskId, (t) => ({
+            ...t,
+            subtasks: t.subtasks.map((st) => (st.id === subtaskId ? { ...st, done: !st.done } : st)),
+          }))
+        ),
+      scheduleTask: (id, date, start) => set((s) => patchTask(s, id, (t) => ({ ...t, date, start }))),
       removeTask: (id) =>
         set((s) => {
           if (!s.tasks[id]) return s;
@@ -136,7 +147,7 @@ export const usePlannerStore = create<PlannerState>()(
     }),
     {
       name: STORAGE_KEY,
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => localStorage),
       // UI-состояние (открытая шторка, выбранный день) не сохраняем.
       partialize: (s): PersistedState => ({
@@ -145,6 +156,26 @@ export const usePlannerStore = create<PlannerState>()(
         projects: s.projects,
         seeded: s.seeded,
       }),
+      // v1 → v2: у задач появились иконка, собственный цвет и подзадачи.
+      migrate: (persisted, version) => {
+        const state = persisted as PersistedState;
+        if (version < 2 && state?.tasks) {
+          const tagColor: Record<string, ColorKey> = {};
+          for (const tag of state.tags ?? []) tagColor[tag.id] = tag.color;
+          const tasks: Record<string, Task> = {};
+          for (const id in state.tasks) {
+            const t = state.tasks[id] as Task;
+            tasks[id] = {
+              ...t,
+              icon: t.icon ?? guessIcon(t.title),
+              color: t.color ?? tagColor[t.tagIds?.[0]] ?? "mist",
+              subtasks: t.subtasks ?? [],
+            };
+          }
+          return { ...state, tasks };
+        }
+        return state;
+      },
       // Гидратация вручную на клиенте — без рассинхронизации SSR/CSR.
       skipHydration: true,
     }

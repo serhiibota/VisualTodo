@@ -2,26 +2,24 @@ import type { ColorKey } from "@/store/types";
 
 export interface Swatch {
   label: string;
-  /** Заливка блока */
-  bg: string;
-  /** Тонкая обводка */
-  border: string;
-  /** Акцентная полоса / точка */
-  accent: string;
-  /** Цвет текста на заливке */
-  text: string;
+  /** Насыщенный цвет: заливка капсулы (выполнено / идёт сейчас), чекбокс, нить */
+  solid: string;
+  /** Светлая заливка капсулы у предстоящей задачи */
+  tint: string;
+  /** Цвет иконки на светлой заливке */
+  ink: string;
 }
 
-// Сплошные пастельные цвета — никаких полупрозрачных наложений и blend-режимов,
-// композитинг на A10 остаётся дешёвым.
+// Приглушённые «бумажные» цвета — как карандаши в японском ежедневнике.
+// Только сплошные HEX: никаких blend-режимов и полупрозрачных слоёв.
 export const PALETTE: Record<ColorKey, Swatch> = {
-  sage: { label: "Шалфей", bg: "#E9EFE6", border: "#D3DECE", accent: "#7E9A76", text: "#34432F" },
-  sand: { label: "Песок", bg: "#F4EDE1", border: "#E6D9C3", accent: "#B8955E", text: "#4E3D24" },
-  rose: { label: "Пудра", bg: "#F6E8E6", border: "#EBD2CE", accent: "#C08A84", text: "#553531" },
-  sky: { label: "Туман", bg: "#E6EDF3", border: "#CFDCE7", accent: "#7B9BB5", text: "#2F4252" },
-  lavender: { label: "Лаванда", bg: "#EDEAF4", border: "#DAD3E8", accent: "#9588B5", text: "#3D3552" },
-  clay: { label: "Глина", bg: "#F3E7DE", border: "#E6D0C0", accent: "#B87D5B", text: "#523423" },
-  mist: { label: "Графит", bg: "#EEEDEA", border: "#DEDCD7", accent: "#7A7873", text: "#2C2B29" },
+  rose: { label: "Коралл", solid: "#E08E7B", tint: "#F8E6E0", ink: "#B8604D" },
+  clay: { label: "Терракота", solid: "#C27A56", tint: "#F3E5DB", ink: "#9A5534" },
+  sand: { label: "Охра", solid: "#D2A45A", tint: "#F6EDDC", ink: "#A07630" },
+  sage: { label: "Шалфей", solid: "#8FAA7E", tint: "#E7EEE2", ink: "#5F7D4F" },
+  sky: { label: "Небо", solid: "#7596B8", tint: "#E3EBF3", ink: "#4B6E93" },
+  lavender: { label: "Слива", solid: "#9A7FA8", tint: "#EEE7F1", ink: "#6F5480" },
+  mist: { label: "Графит", solid: "#4F5A6B", tint: "#E6E8EB", ink: "#3A4452" },
 };
 
-export const COLOR_KEYS = Object.keys(PALETTE) as ColorKey[];
+export const COLOR_KEYS: ColorKey[] = ["rose", "clay", "sand", "sage", "sky", "lavender", "mist"];

@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { Icon } from "@/components/ui/Icon";
+import { PALETTE } from "@/lib/palette";
 import { addDays, formatWeekdayShort, fromDateKey, startOfWeek, todayKey } from "@/lib/time";
 import { usePlannerStore } from "@/store/usePlannerStore";
 
@@ -16,10 +17,17 @@ export function WeekStrip() {
     return Array.from({ length: 7 }, (_, i) => addDays(monday, i));
   }, [selectedDate]);
 
-  const busy = useMemo(() => {
-    const set = new Set<string>();
-    for (const id in tasks) set.add(tasks[id].date);
-    return set;
+  // Под каждым днём — до 4 цветных точек его блоков (по порядку времени)
+  const dots = useMemo(() => {
+    const byDay: Record<string, { start: number; color: string }[]> = {};
+    for (const id in tasks) {
+      const t = tasks[id];
+      if (!t.date) continue;
+      (byDay[t.date] ??= []).push({ start: t.start, color: (PALETTE[t.color] ?? PALETTE.mist).solid });
+    }
+    const out: Record<string, string[]> = {};
+    for (const day in byDay) out[day] = byDay[day].sort((a, b) => a.start - b.start).slice(0, 4).map((d) => d.color);
+    return out;
   }, [tasks]);
 
   return (
@@ -60,9 +68,11 @@ export function WeekStrip() {
               >
                 {fromDateKey(day).getDate()}
               </span>
-              <span
-                className={"h-1 w-1 rounded-full " + (busy.has(day) && !selected ? "bg-faint" : "bg-transparent")}
-              />
+              <span className="flex h-1.5 items-center gap-[2px]">
+                {(dots[day] ?? []).map((c, i) => (
+                  <span key={i} className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: c }} />
+                ))}
+              </span>
             </button>
           );
         })}
