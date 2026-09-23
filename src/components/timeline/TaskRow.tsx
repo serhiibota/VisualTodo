@@ -1,9 +1,9 @@
 "use client";
 
-import { memo, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Icon } from "@/components/ui/Icon";
-import { pillHeight } from "@/lib/constants";
+import { DAY_END, PILL_PX_PER_MIN, pillHeight, SNAP_MIN } from "@/lib/constants";
 import { PALETTE } from "@/lib/palette";
 import { formatClock, formatDuration } from "@/lib/time";
 import type { Task } from "@/store/types";
@@ -20,18 +20,34 @@ interface TaskRowProps {
   dimmed: boolean;
   onOpen: (id: string) => void;
   onToggle: (id: string) => void;
+  onMove: (id: string, start: number) => void;
 }
 
 const SWIPE_START = 10;
 const SWIPE_COMPLETE = 72;
 const SWIPE_MAX = 110;
+const LONG_PRESS_MS = 380;
+const DRAG_MIN_PER_PX = 1 / PILL_PX_PER_MIN;
+const EDGE = 64;
 
 /**
  * Строка «нити дня»: время слева, капсула на нити, текст, чекбокс.
  * Свайп вправо = выполнено: touch-action: pan-y оставляет вертикальный
  * скролл браузеру, а сдвиг пишется в transform напрямую (без ререндеров).
+ * Долгое нажатие (380 мс) «поднимает» блок: его можно вести по нити,
+ * время меняется с шагом 5 минут, у краёв список прокручивается сам.
  */
-function TaskRowImpl({ task, progress, showEnd, overlaps, projectName, dimmed, onOpen, onToggle }: TaskRowProps) {
+function TaskRowImpl({
+  task,
+  progress,
+  showEnd,
+  overlaps,
+  projectName,
+  dimmed,
+  onOpen,
+  onToggle,
+  onMove,
+}: TaskRowProps) {
   const swatch = PALETTE[task.color] ?? PALETTE.mist;
   const height = pillHeight(task.duration);
   const end = task.start + task.duration;
@@ -39,9 +55,30 @@ function TaskRowImpl({ task, progress, showEnd, overlaps, projectName, dimmed, o
   const fill = task.done ? 1 : active ? progress : 0;
   const tall = height >= 96;
 
+  const rowRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
-  const g = useRef({ id: -1, x: 0, y: 0, dx: 0, swiping: false, moved: false });
+  const badgeRef = useRef<HTMLSpanElement>(null);
+  const g = useRef({
+    id: -1,
+    x: 0,
+    y: 0,
+    dx: 0,
+    swiping: false,
+    moved: false,
+    // перетаскивание по нити
+    dragging: false,
+    timer: 0 as ReturnType<typeof setTimeout> | 0,
+    lastY: 0,
+    scroller: null as HTMLElement | null,
+    startScroll: 0,
+    newStart: task.start,
+    raf: 0,
+  });
+
+  // Актуальные значения для обработчиков, живущих дольше одного рендера
+  const live = useRef({ task, onMove });
+  live.current = { task, onMove };
 
   const apply = (dx: number, animate: boolean) => {
     const body = bodyRef.current;
@@ -52,18 +89,145 @@ function TaskRowImpl({ task, progress, showEnd, overlaps, projectName, dimmed, o
     hint.style.opacity = String(Math.min(1, dx / SWIPE_COMPLETE));
   };
 
+  // ---------- Перетаскивание по нити (long-press → drag) ----------
+
+  const updateDrag = () => {
+    const s = g.current;
+    const row = rowRef.current;
+    if (!row || !s.scroller) return;
+    const { start, duration } = live.current.task;
+    const dy = s.lastY - s.y + (s.scroller.scrollTop - s.startScroll);
+    row.style.transform = "translate3d(0," + dy + "px,0)";
+    // Масштаб перетаскивания = масштаб капсул: ~1.1 мин на пиксель, шаг 5 мин
+    const raw = start + dy * DRAG_MIN_PER_PX;
+    const next = Math.max(0, Math.min(DAY_END - duration, Math.round(raw / SNAP_MIN) * SNAP_MIN));
+    if (next !== s.newStart) {
+      s.newStart = next;
+      if (badgeRef.current) {
+        badgeRef.current.textContent = formatClock(next) + "–" + formatClock(Math.min(next + duration, DAY_END));
+      }
+    }
+  };
+
+  // Автопрокрутка у верхнего/нижнего края списка
+  const autoScroll = () => {
+    const s = g.current;
+    if (!s.dragging || !s.scroller) return;
+    const rect = s.scroller.getBoundingClientRect();
+    const top = s.lastY - rect.top;
+    const bottom = rect.bottom - s.lastY;
+    let v = 0;
+    if (top < EDGE) v = -Math.ceil((EDGE - top) / 6);
+    else if (bottom < EDGE) v = Math.ceil((EDGE - bottom) / 6);
+    if (v) {
+      s.scroller.scrollTop += v;
+      updateDrag();
+    }
+    s.raf = requestAnimationFrame(autoScroll);
+  };
+
+  const startDrag = () => {
+    const s = g.current;
+    const row = rowRef.current;
+    if (!row || s.moved || s.swiping || s.id === -1) return;
+    s.dragging = true;
+    s.moved = true; // клик после отпускания не откроет шторку
+    s.lastY = s.y;
+    s.scroller = row.closest<HTMLElement>(".scroll-touch");
+    s.startScroll = s.scroller ? s.scroller.scrollTop : 0;
+    s.newStart = live.current.task.start;
+    try {
+      bodyRef.current?.setPointerCapture(s.id);
+    } catch {
+      /* указатель уже отпущен */
+    }
+    if (badgeRef.current) {
+      const { start, duration } = live.current.task;
+      badgeRef.current.textContent = formatClock(start) + "–" + formatClock(Math.min(start + duration, DAY_END));
+    }
+    row.style.transition = "none";
+    row.classList.add("is-dragging");
+    // :has() нет в iOS 15 — поднимаем z-index родителю вручную
+    row.parentElement?.classList.add("is-lifted");
+    s.raf = requestAnimationFrame(autoScroll);
+  };
+
+  const endDrag = (commit: boolean) => {
+    const s = g.current;
+    const row = rowRef.current;
+    s.dragging = false;
+    cancelAnimationFrame(s.raf);
+    if (!row) return;
+    row.classList.remove("is-dragging");
+    row.parentElement?.classList.remove("is-lifted");
+    const changed = commit && s.newStart !== live.current.task.start;
+    if (changed) {
+      // Список пересоберётся в новом порядке — снимаем сдвиг без анимации
+      row.style.transform = "";
+      live.current.onMove(live.current.task.id, s.newStart);
+    } else {
+      row.style.transition = "";
+      row.style.transform = "";
+    }
+  };
+
+  const clearTimer = () => {
+    const s = g.current;
+    if (s.timer) clearTimeout(s.timer);
+    s.timer = 0;
+  };
+
+  // Пока тянем — гасим нативный скролл. Нужен НЕпассивный touchmove:
+  // React вешает touch-обработчики пассивными, поэтому addEventListener вручную.
+  useEffect(() => {
+    const body = bodyRef.current;
+    if (!body) return;
+    const onTouchMove = (e: TouchEvent) => {
+      if (g.current.dragging) e.preventDefault();
+    };
+    const onContextMenu = (e: Event) => e.preventDefault();
+    body.addEventListener("touchmove", onTouchMove, { passive: false });
+    body.addEventListener("contextmenu", onContextMenu);
+    const state = g.current;
+    return () => {
+      body.removeEventListener("touchmove", onTouchMove);
+      body.removeEventListener("contextmenu", onContextMenu);
+      if (state.timer) clearTimeout(state.timer);
+      cancelAnimationFrame(state.raf);
+    };
+  }, []);
+
+  // ---------- Жесты ----------
+
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
-    g.current = { id: e.pointerId, x: e.clientX, y: e.clientY, dx: 0, swiping: false, moved: false };
+    clearTimer();
+    const s = g.current;
+    s.id = e.pointerId;
+    s.x = e.clientX;
+    s.y = e.clientY;
+    s.dx = 0;
+    s.swiping = false;
+    s.moved = false;
+    s.dragging = false;
+    s.timer = setTimeout(startDrag, LONG_PRESS_MS);
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
     const s = g.current;
     if (s.id !== e.pointerId) return;
+    if (s.dragging) {
+      s.lastY = e.clientY;
+      updateDrag();
+      return;
+    }
     const dx = e.clientX - s.x;
     const dy = e.clientY - s.y;
     if (!s.swiping) {
-      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) s.moved = true;
+      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+        s.moved = true;
+        clearTimer();
+      }
       if (dx > SWIPE_START && Math.abs(dx) > Math.abs(dy) * 1.4) {
         s.swiping = true;
         e.currentTarget.setPointerCapture(e.pointerId);
@@ -75,8 +239,10 @@ function TaskRowImpl({ task, progress, showEnd, overlaps, projectName, dimmed, o
   };
 
   const finish = (commit: boolean) => {
+    clearTimer();
     const s = g.current;
-    if (s.swiping) {
+    if (s.dragging) endDrag(commit);
+    else if (s.swiping) {
       if (commit && s.dx >= SWIPE_COMPLETE) onToggle(task.id);
       apply(0, true);
     }
@@ -108,7 +274,13 @@ function TaskRowImpl({ task, progress, showEnd, overlaps, projectName, dimmed, o
         {task.done ? "Вернуть" : "Готово"}
       </div>
 
-      <div className="flex">
+      <div ref={rowRef} className="drag-layer relative flex">
+        {/* Плашка нового времени — видна только во время перетаскивания */}
+        <span
+          ref={badgeRef}
+          className="drag-badge pointer-events-none absolute left-0 top-0 z-[2] rounded-full px-2 py-1 text-[11px] font-semibold tabular-nums text-white"
+          style={{ backgroundColor: swatch.solid }}
+        />
         {/* Время: начало у верха капсулы, конец — у низа */}
         <div className="relative w-[42px] shrink-0 text-right text-[11px] tabular-nums leading-none text-muted">
           <span className="absolute right-0 top-[4px]">{formatClock(task.start)}</span>

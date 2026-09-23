@@ -145,6 +145,33 @@ body {
     opacity: 0.8;
   }
 
+  /* Перетаскивание по нити: поднятый блок едет за пальцем через transform */
+  .drag-layer {
+    transition: transform 260ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .flow-row.is-lifted {
+    z-index: 30;
+  }
+  .drag-layer.is-dragging {
+    will-change: transform;
+  }
+  .drag-layer.is-dragging .flow-body {
+    opacity: 1;
+  }
+  /* Поднятый блок — на сплошной «карточке»; тень растеризуется один раз вместе со слоем */
+  .drag-layer.is-dragging {
+    background: #fffefb;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(35, 34, 32, 0.16);
+  }
+  .drag-badge {
+    display: none;
+    transform: translate3d(-6px, -4px, 0);
+  }
+  .drag-layer.is-dragging .drag-badge {
+    display: block;
+  }
+
   /* Заливка капсулы меняется раз в 30 с или по чекбоксу — плавно */
   .pill-fill {
     transition: height 450ms cubic-bezier(0.32, 0.72, 0, 1);
@@ -186,6 +213,7 @@ body {
   @media (prefers-reduced-motion: reduce) {
     .sheet-panel,
     .flow-body,
+    .drag-layer,
     .pill-fill,
     .progress-fill {
       transition-duration: 1ms;

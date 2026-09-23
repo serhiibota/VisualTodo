@@ -23,6 +23,7 @@ export function Timeline() {
   const activeProjectId = usePlannerStore((s) => s.activeProjectId);
   const openSheet = usePlannerStore((s) => s.openSheet);
   const toggleTask = usePlannerStore((s) => s.toggleTask);
+  const updateTask = usePlannerStore((s) => s.updateTask);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
   const isToday = selectedDate === todayKey();
@@ -54,6 +55,7 @@ export function Timeline() {
   }, [selectedDate]);
 
   const onOpen = useCallback((id: string) => openSheet({ kind: "task", taskId: id }), [openSheet]);
+  const onMove = useCallback((id: string, start: number) => updateTask(id, { start }), [updateTask]);
   const onAdd = useCallback(
     (start: number) => openSheet({ kind: "task", taskId: null, start }),
     [openSheet]
@@ -91,6 +93,7 @@ export function Timeline() {
               dimmed={activeProjectId !== null && task.projectId !== activeProjectId}
               onOpen={onOpen}
               onToggle={toggleTask}
+              onMove={onMove}
             />
           );
         })}
