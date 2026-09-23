@@ -1,0 +1,184 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Базовые правила под Safari iOS 15 / iPhone 7:
+ * - страница целиком не скроллится (скроллится только таймлайн) → панели Safari
+ *   не «прыгают», и высота интерфейса стабильна;
+ * - высота берётся из --app-height (window.innerHeight) с фолбэком на
+ *   -webkit-fill-available — `100vh` в iOS 15 залезает под нижнюю панель,
+ *   а `dvh` появился лишь в 15.4;
+ * - никаких backdrop-filter / mix-blend-mode / filter: blur.
+ */
+
+:root {
+  --app-height: 100vh;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+html {
+  height: 100%;
+  height: -webkit-fill-available;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: #f7f5f0;
+}
+
+body {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  min-height: 100%;
+  min-height: -webkit-fill-available;
+  background: #f7f5f0;
+  color: #232220;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  font-feature-settings: "kern", "liga";
+}
+
+@layer base {
+  button {
+    touch-action: manipulation; /* убирает задержку double-tap-zoom */
+  }
+  input,
+  textarea {
+    outline: none;
+    border-radius: 0;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  /* Шрифт полей не меньше 16px — иначе iOS зумит страницу при фокусе */
+  input,
+  textarea,
+  select {
+    font-size: max(16px, 1em);
+  }
+  :focus-visible {
+    outline: 2px solid #c4704f;
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .app-shell {
+    height: 100vh;
+    height: -webkit-fill-available;
+    height: var(--app-height);
+    overflow: hidden;
+  }
+
+  .safe-top {
+    padding-top: var(--safe-top);
+  }
+
+  /* Инерционный скролл на старом WebKit + изоляция скролла от страницы */
+  .scroll-touch {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Расширенная зона нажатия для мелких контролов (≥ 36px) */
+  .tap-expand::after {
+    content: "";
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    bottom: -8px;
+    left: -8px;
+  }
+
+  /* Плавающая кнопка: над кнопкой Home / нижней панелью Safari */
+  .fab {
+    bottom: calc(20px + var(--safe-bottom));
+    box-shadow: 0 6px 18px rgba(35, 34, 32, 0.22);
+    transition: transform 160ms ease-out;
+    -webkit-transform: translate3d(0, 0, 0);
+  }
+
+  /* ---------- Таймлайн ---------- */
+
+  .grid-half {
+    height: 0;
+    border-top: 1px dashed #efece6;
+  }
+
+  .task-slot {
+    transition: opacity 250ms ease;
+    contain: layout style;
+  }
+
+  .task-card {
+    touch-action: pan-y; /* вертикаль — браузеру, горизонталь — нашему свайпу */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    cursor: pointer;
+    transition:
+      transform 260ms cubic-bezier(0.32, 0.72, 0, 1),
+      opacity 250ms ease;
+  }
+
+  .task-card:active {
+    opacity: 0.85;
+  }
+
+  /* Выполненная задача «затухает» */
+  .task-card.is-done {
+    opacity: 0.45;
+  }
+  .task-card.is-done .task-title {
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+  }
+
+  .now-line {
+    will-change: transform;
+  }
+
+  .progress-fill {
+    transition: transform 400ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  /* ---------- Шторка ---------- */
+
+  .sheet-backdrop {
+    touch-action: none;
+  }
+
+  .sheet-panel {
+    max-height: calc(var(--app-height) - 28px);
+    transform: translate3d(0, 100%, 0);
+    transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1);
+    will-change: transform;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    box-shadow: 0 -8px 30px rgba(35, 34, 32, 0.12);
+  }
+  .sheet-panel.is-open {
+    transform: translate3d(0, 0, 0);
+  }
+
+  /* Отступ под индикатор Home на iPhone X+; на iPhone 7 (inset = 0) — 12px */
+  .sheet-footer {
+    padding-bottom: max(12px, var(--safe-bottom));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sheet-panel,
+    .task-card,
+    .progress-fill {
+      transition-duration: 1ms;
+    }
+  }
+}
