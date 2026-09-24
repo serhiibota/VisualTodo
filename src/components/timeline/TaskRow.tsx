@@ -279,7 +279,6 @@ function TaskRowImpl({
       style={{ opacity: dimmed ? 0.3 : undefined }}
       data-active={active || undefined}
     >
-      {active && <div className="focus-band" />}
       <div className="spine spine-solid" />
       {active && nowMinute !== null && <NowMark top={3 + Math.round(fill * height)} minute={nowMinute} />}
       <div

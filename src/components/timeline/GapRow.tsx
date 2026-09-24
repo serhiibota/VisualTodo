@@ -23,7 +23,6 @@ function GapRowImpl({ start, end, now, onAdd }: GapRowProps) {
 
   return (
     <div className="flow-row relative flex" style={{ height }} data-active={isNow || undefined}>
-      {isNow && <div className="focus-band" />}
       <div className="spine spine-dashed" />
       {isNow && <NowMark top={Math.round(((now - start) / minutes) * height)} minute={now} />}
       <div className="w-[42px] shrink-0" />

@@ -139,19 +139,6 @@ body {
     opacity: 0.5;
   }
 
-  /* Фокусная полоса под текущим блоком / окном */
-  .focus-band {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: -8px;
-    right: -8px;
-    border-radius: 22px;
-    background: rgb(var(--c-surface));
-    box-shadow: 0 1px 3px rgb(var(--c-shade) / 0.06), 0 0 0 1px rgb(var(--c-line));
-    pointer-events: none;
-  }
-
   /* «Вы здесь»: цвет «сейчас» схемы (киноварь в «Туши»), иначе акцент */
   .now-mark-label {
     background: var(--c-now, rgb(var(--c-accent)));
