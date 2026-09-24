@@ -23,6 +23,8 @@ interface UiState {
   /** Фильтр по проекту: null — все задачи */
   activeProjectId: string | null;
   sheet: SheetState;
+  /** Режим «Свободное время»: вместо нити дня — карта свободных окон */
+  freeMode: boolean;
 }
 
 interface Actions {
@@ -30,6 +32,7 @@ interface Actions {
   setActiveProject: (id: string | null) => void;
   openSheet: (sheet: SheetState) => void;
   closeSheet: () => void;
+  toggleFreeMode: () => void;
 
   addTask: (draft: TaskDraft) => string;
   updateTask: (id: string, patch: Partial<TaskDraft>) => void;
@@ -76,11 +79,13 @@ export const usePlannerStore = create<PlannerState>()(
       selectedDate: "",
       activeProjectId: null,
       sheet: null,
+      freeMode: false,
 
       selectDate: (selectedDate) => set({ selectedDate }),
       setActiveProject: (activeProjectId) => set({ activeProjectId }),
       openSheet: (sheet) => set({ sheet }),
       closeSheet: () => set({ sheet: null }),
+      toggleFreeMode: () => set((s) => ({ freeMode: !s.freeMode })),
 
       addTask: (draft) => {
         const id = uid();

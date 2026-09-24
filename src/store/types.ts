@@ -55,7 +55,7 @@ export interface Project {
 export type TaskDraft = Omit<Task, "id">;
 
 export type SheetState =
-  | { kind: "task"; taskId: string | null; start?: number; inbox?: boolean }
+  | { kind: "task"; taskId: string | null; start?: number; duration?: number; inbox?: boolean }
   | { kind: "projects" }
   | { kind: "inbox" }
   | { kind: "settings" }

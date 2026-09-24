@@ -1,6 +1,7 @@
 "use client";
 
 import { DayHeader } from "@/components/header/DayHeader";
+import { FreeView } from "@/components/free/FreeView";
 import { InboxSheet } from "@/components/inbox/InboxSheet";
 import { ProjectsSheet } from "@/components/projects/ProjectsSheet";
 import { SettingsSheet } from "@/components/settings/SettingsSheet";
@@ -25,8 +26,7 @@ export function Planner() {
       {hydrated ? (
         <>
           <DayHeader />
-          <Timeline />
-          <AddButton />
+          <DayBody />
           <TaskSheet />
           <ProjectsSheet />
           <InboxSheet />
@@ -36,6 +36,18 @@ export function Planner() {
         <Skeleton />
       )}
     </div>
+  );
+}
+
+/** Нить дня или режим «Свободное время» — в нём убрано всё, кроме окон */
+function DayBody() {
+  const freeMode = usePlannerStore((s) => s.freeMode);
+  if (freeMode) return <FreeView />;
+  return (
+    <>
+      <Timeline />
+      <AddButton />
+    </>
   );
 }
 

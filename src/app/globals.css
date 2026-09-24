@@ -274,3 +274,47 @@ body {
     stroke: rgb(var(--c-faint)) !important;
   }
 }
+
+@layer components {
+  /* ---------- Режим «Свободное время» ---------- */
+  .free-bar {
+    background: rgb(var(--c-surface));
+    box-shadow: inset 0 0 0 1px rgb(var(--c-line));
+  }
+  .free-bar-busy {
+    background: rgb(var(--c-strong));
+    opacity: 0.85;
+  }
+  .free-bar-busy.is-past {
+    opacity: 0.25;
+  }
+  /* Свободные окна — лёгкий тон акцента: видно не только «где занято», но и «где свободно» */
+  .free-bar-slot {
+    background: rgb(var(--c-accent) / 0.14);
+    box-shadow: inset 0 0 0 1px rgb(var(--c-accent) / 0.35);
+  }
+  /* Прошедшая часть сегодняшнего дня — штриховка, как вычеркнутое в блокноте */
+  .free-bar-past {
+    background-image: repeating-linear-gradient(135deg, rgb(var(--c-line)) 0 2px, transparent 2px 6px);
+    background-color: rgb(var(--c-hover));
+  }
+  .free-bar-now {
+    background: var(--c-now, rgb(var(--c-accent)));
+  }
+  .free-window {
+    box-shadow: 0 0 0 1px rgb(var(--c-line));
+  }
+  /* Короткая подсветка окна после тапа по полосе */
+  .free-window.is-flash {
+    animation: free-flash 1.2s ease-out;
+  }
+  @keyframes free-flash {
+    0%,
+    30% {
+      box-shadow: 0 0 0 2px var(--c-now, rgb(var(--c-accent)));
+    }
+    100% {
+      box-shadow: 0 0 0 1px rgb(var(--c-line));
+    }
+  }
+}

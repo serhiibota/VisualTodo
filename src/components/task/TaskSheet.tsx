@@ -55,7 +55,7 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
           title: "",
           date: sheet.inbox ? null : selectedDate,
           start: sheet.start ?? DEFAULT_START,
-          duration: 30,
+          duration: sheet.duration ?? 30,
           icon: "dot",
           color: COLOR_KEYS[Object.keys(tasks).length % COLOR_KEYS.length],
           description: "",

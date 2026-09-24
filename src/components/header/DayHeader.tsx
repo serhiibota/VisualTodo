@@ -16,6 +16,8 @@ export function DayHeader() {
   const tasks = usePlannerStore((s) => s.tasks);
   const selectDate = usePlannerStore((s) => s.selectDate);
   const openSheet = usePlannerStore((s) => s.openSheet);
+  const freeMode = usePlannerStore((s) => s.freeMode);
+  const toggleFreeMode = usePlannerStore((s) => s.toggleFreeMode);
   const isToday = selectedDate === todayKey();
 
   const inboxCount = useMemo(() => {
@@ -62,6 +64,18 @@ export function DayHeader() {
         <div className="flex shrink-0 items-center gap-1.5 pt-1">
           <button
             type="button"
+            aria-label="Свободное время"
+            aria-pressed={freeMode}
+            onClick={toggleFreeMode}
+            className={
+              "flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-200 " +
+              (freeMode ? "bg-ink text-milk" : "bg-hover text-graphite active:bg-line")
+            }
+          >
+            <Icon name="hourglass" size={19} />
+          </button>
+          <button
+            type="button"
             aria-label={"Входящие: " + inboxCount}
             onClick={() => openSheet({ kind: "inbox" })}
             className="relative flex h-9 w-9 items-center justify-center rounded-full bg-hover text-graphite active:bg-line"
@@ -92,27 +106,31 @@ export function DayHeader() {
         </div>
       </div>
 
-      <div className="mt-2.5 flex items-center gap-3">
-        <div className="h-[3px] flex-1 overflow-hidden rounded-full bg-line">
-          <div
-            className="progress-fill h-full w-full rounded-full bg-graphite"
-            style={{ transform: "translate3d(" + (progress - 1) * 100 + "%,0,0)" }}
-          />
+      {!freeMode && (
+        <div className="mt-2.5 flex items-center gap-3">
+          <div className="h-[3px] flex-1 overflow-hidden rounded-full bg-line">
+            <div
+              className="progress-fill h-full w-full rounded-full bg-graphite"
+              style={{ transform: "translate3d(" + (progress - 1) * 100 + "%,0,0)" }}
+            />
+          </div>
+          <span className="shrink-0 text-[12px] tabular-nums text-muted">
+            {total
+              ? done + " из " + total + " " + pluralRu(total, "блока", "блоков", "блоков")
+              : "нет блоков"}
+          </span>
         </div>
-        <span className="shrink-0 text-[12px] tabular-nums text-muted">
-          {total
-            ? done + " из " + total + " " + pluralRu(total, "блока", "блоков", "блоков")
-            : "нет блоков"}
-        </span>
-      </div>
+      )}
 
       <div className="mt-2">
         <WeekStrip />
       </div>
 
-      <div className="mt-1.5">
-        <ProjectFilter />
-      </div>
+      {!freeMode && (
+        <div className="mt-1.5">
+          <ProjectFilter />
+        </div>
+      )}
     </header>
   );
 }

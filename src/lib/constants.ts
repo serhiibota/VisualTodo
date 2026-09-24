@@ -27,6 +27,12 @@ export const DEFAULT_START = 9 * 60;
 
 export const DAY_END = 24 * 60;
 
+/** Окно дня, в котором считаем свободное время (сон и глубокая ночь не в счёт) */
+export const FREE_FROM = 7 * 60;
+export const FREE_TO = 23 * 60;
+/** Окна короче этого в режиме «Свободное время» не показываем */
+export const MIN_FREE = 15;
+
 export const DURATION_PRESETS = [15, 30, 45, 60, 90, 120, 180];
 
 export const STORAGE_KEY = "structura-planner";

@@ -45,3 +45,28 @@ export function findFreeSlot(tasks: Task[], duration: number, from: number): num
   }
   return Math.min(start, DAY_END - duration);
 }
+
+export interface FreeWindow {
+  start: number;
+  end: number;
+}
+
+/**
+ * Свободные окна в [from, to): занятость — объединение всех задач дня,
+ * наложения и стыки склеиваются. Окна короче minLen отбрасываются.
+ */
+export function freeWindows(tasks: Task[], from: number, to: number, minLen: number): FreeWindow[] {
+  const busy = tasks
+    .map((t) => ({ start: t.start, end: t.start + t.duration }))
+    .filter((b) => b.end > from && b.start < to)
+    .sort((a, b) => a.start - b.start);
+
+  const out: FreeWindow[] = [];
+  let cursor = from;
+  for (const b of busy) {
+    if (b.start > cursor && b.start - cursor >= minLen) out.push({ start: cursor, end: b.start });
+    cursor = Math.max(cursor, b.end);
+  }
+  if (to - cursor >= minLen) out.push({ start: cursor, end: to });
+  return out;
+}
