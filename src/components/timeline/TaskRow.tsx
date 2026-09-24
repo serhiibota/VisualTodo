@@ -15,6 +15,10 @@ interface TaskRowProps {
   progress: number | null;
   /** Показывать время окончания (если следующая задача не стыкуется) */
   showEnd: boolean;
+  /** Блок уже закончился (сегодня) — приглушаем, чтобы взгляд шёл к настоящему */
+  past: boolean;
+  /** Текущая минута (для подписи отметки «вы здесь»), только у идущего блока */
+  nowMinute: number | null;
   overlaps: boolean;
   projectName: string | null;
   dimmed: boolean;
@@ -41,6 +45,8 @@ function TaskRowImpl({
   task,
   progress,
   showEnd,
+  past,
+  nowMinute,
   overlaps,
   projectName,
   dimmed,
@@ -268,8 +274,14 @@ function TaskRowImpl({
   const hasMeta = task.subtasks.length > 0 || task.links.length > 0 || !!projectName || overlaps;
 
   return (
-    <div className="flow-row relative py-[3px]" style={{ opacity: dimmed ? 0.3 : 1 }} data-active={active || undefined}>
+    <div
+      className={"flow-row relative py-[3px]" + (past && !dimmed ? " is-past" : "")}
+      style={{ opacity: dimmed ? 0.3 : undefined }}
+      data-active={active || undefined}
+    >
+      {active && <div className="focus-band" />}
       <div className="spine spine-solid" />
+      {active && nowMinute !== null && <NowMark top={3 + Math.round(fill * height)} minute={nowMinute} />}
       <div
         ref={hintRef}
         className="pointer-events-none absolute inset-y-0 left-[52px] flex items-center gap-1 text-[12px] font-medium"
@@ -358,3 +370,20 @@ function TaskRowImpl({
 }
 
 export const TaskRow = memo(TaskRowImpl);
+
+/**
+ * Отметка «вы здесь»: засечка на уровне текущей минуты через колонку
+ * времени и капсулу (текст не перечёркивает). Цвет — «сейчас» схемы,
+ * в цветных схемах — акцент.
+ */
+export function NowMark({ top, minute }: { top: number; minute: number }) {
+  return (
+    <div className="now-mark pointer-events-none absolute left-0 z-[3]" style={{ top }} aria-hidden="true">
+      <span className="now-mark-label absolute left-0 w-[42px] -translate-y-1/2 rounded-full py-px text-center text-[10px] font-semibold tabular-nums">
+        {formatClock(Math.floor(minute))}
+      </span>
+      <span className="now-mark-line absolute left-[44px] h-[2px] w-[50px] -translate-y-1/2" />
+      <span className="now-mark-line absolute left-[91px] h-[7px] w-[7px] -translate-y-1/2 rounded-full" />
+    </div>
+  );
+}

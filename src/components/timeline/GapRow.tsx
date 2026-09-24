@@ -3,7 +3,8 @@
 import { memo } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { gapHeight } from "@/lib/constants";
-import { formatClock, formatDuration } from "@/lib/time";
+import { formatDuration } from "@/lib/time";
+import { NowMark } from "./TaskRow";
 
 interface GapRowProps {
   start: number;
@@ -22,21 +23,23 @@ function GapRowImpl({ start, end, now, onAdd }: GapRowProps) {
 
   return (
     <div className="flow-row relative flex" style={{ height }} data-active={isNow || undefined}>
+      {isNow && <div className="focus-band" />}
       <div className="spine spine-dashed" />
+      {isNow && <NowMark top={Math.round(((now - start) / minutes) * height)} minute={now} />}
       <div className="w-[42px] shrink-0" />
       <div className="relative flex w-[62px] shrink-0 items-center justify-center">
-        {isNow && <span className="relative z-[1] h-2.5 w-2.5 rounded-full bg-accent ring-4 ring-milk" />}
+
       </div>
       <button
         type="button"
         onClick={() => onAdd(isNow ? Math.ceil(now / 5) * 5 : start, Math.min(60, left))}
-        className="flex min-w-0 flex-1 items-center gap-2 text-left text-[13px] text-muted"
+        className="relative flex min-w-0 flex-1 items-center gap-2 text-left text-[13px] text-muted"
       >
         <span className="truncate">
           {isNow ? (
             <>
-              <span className="font-medium text-accent">Сейчас {formatClock(Math.floor(now))}</span>
-              {" · свободно ещё " + formatDuration(left)}
+              <span className="now-text font-medium">Пауза</span>
+              {" · ещё " + formatDuration(left)}
             </>
           ) : (
             "Свободно " + formatDuration(minutes)
