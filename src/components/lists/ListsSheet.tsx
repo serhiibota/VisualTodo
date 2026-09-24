@@ -17,18 +17,21 @@ export function ListsSheet() {
   const open = sheet?.kind === "lists" || sheet?.kind === "list";
 
   const [listId, setListId] = useState<string | null>(null);
+  // Перечень «Все списки и заметки» свёрнут при каждом открытии шторки
+  const [expanded, setExpanded] = useState(false);
   // Как открыли: весь раздел или конкретный список
   const [openedWith, setOpenedWith] = useState(sheet);
   if (open && sheet !== openedWith) {
     setOpenedWith(sheet);
     setListId(sheet?.kind === "list" ? sheet.listId : null);
+    setExpanded(false);
   }
 
   const list = listId ? lists.find((l) => l.id === listId) : undefined;
 
   return (
     <BottomSheet open={open} onClose={closeSheet} title="Списки и заметки">
-      {list ? <ListDetail list={list} onBack={() => setListId(null)} /> : <ListsTab onOpen={setListId} />}
+      {list ? <ListDetail list={list} onBack={() => setListId(null)} /> : <ListsTab onOpen={setListId} expanded={expanded} onToggle={() => setExpanded((v) => !v)} />}
     </BottomSheet>
   );
 }

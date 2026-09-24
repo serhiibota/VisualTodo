@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { LIST_KIND, listSummary } from "@/lib/lists";
 import { usePlannerStore } from "@/store/usePlannerStore";
@@ -48,6 +48,7 @@ export function ListDetail({ list, onBack }: { list: TaskList; onBack: () => voi
         {kind.label}
         {list.kind !== "note" && " · " + listSummary(list)}
       </p>
+      <AttachedTo listId={list.id} />
 
       {list.kind === "note" ? <NoteBody list={list} /> : <ItemsBody list={list} />}
 
@@ -81,6 +82,32 @@ export function ListDetail({ list, onBack }: { list: TaskList; onBack: () => voi
           Удалить
         </button>
       </div>
+    </div>
+  );
+}
+
+/** Блоки, к которым прикреплён список, — с откреплением прямо отсюда */
+function AttachedTo({ listId }: { listId: string }) {
+  const tasks = usePlannerStore((s) => s.tasks);
+  const updateTask = usePlannerStore((s) => s.updateTask);
+  const linked = useMemo(() => Object.values(tasks).filter((t) => t.listId === listId), [tasks, listId]);
+  if (!linked.length) return null;
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[13px] text-muted">
+      <span>Прикреплён к:</span>
+      {linked.map((t) => (
+        <span key={t.id} className="flex max-w-full items-center gap-1 rounded-full bg-hover py-0.5 pl-2.5 pr-1 text-graphite">
+          <span className="truncate">{t.title}</span>
+          <button
+            type="button"
+            aria-label={"Открепить от «" + t.title + "»"}
+            onClick={() => updateTask(t.id, { listId: null })}
+            className="tap-expand relative flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-muted active:bg-line"
+          >
+            <Icon name="close" size={12} strokeWidth={2} />
+          </button>
+        </span>
+      ))}
     </div>
   );
 }

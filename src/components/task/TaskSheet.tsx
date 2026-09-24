@@ -106,6 +106,14 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
   const attached = draft.listId ? lists.find((l) => l.id === draft.listId) : undefined;
   // Новый список для блока: название и тип задаёт человек (форма), здесь только создаём и прикрепляем
   const [creatingList, setCreatingList] = useState(false);
+  /**
+   * Прикрепить/открепить. У существующего блока — сразу в хранилище, без «Сохранить»:
+   * иначе крестик менял только черновик, и после закрытия шторки список оставался на месте.
+   */
+  const setListId = (listId: string | null) => {
+    patch({ listId });
+    if (taskId) updateTask(taskId, { listId });
+  };
   const openAttached = () => {
     if (!attached || !canSave) return;
     commit();
@@ -287,11 +295,10 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
           </button>
           <button
             type="button"
-            aria-label="Открепить"
-            onClick={() => patch({ listId: null })}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted active:bg-line"
+            onClick={() => setListId(null)}
+            className="h-9 shrink-0 rounded-full px-2.5 text-[13px] text-graphite underline active:bg-line"
           >
-            <Icon name="close" size={16} />
+            Открепить
           </button>
         </div>
       ) : (
@@ -301,14 +308,14 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
             kinds={["check", "shopping"]}
             onCancel={() => setCreatingList(false)}
             onCreate={(t, kind) => {
-              patch({ listId: addList(t, kind) });
+              setListId(addList(t, kind));
               setCreatingList(false);
             }}
           />
         ) : (
           <div className="flex flex-wrap gap-1.5">
             {lists.map((l) => (
-              <Chip key={l.id} on={false} onClick={() => patch({ listId: l.id })}>
+              <Chip key={l.id} on={false} onClick={() => setListId(l.id)}>
                 {l.title}
               </Chip>
             ))}
