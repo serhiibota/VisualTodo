@@ -43,22 +43,23 @@ export function DayHeader() {
         <div className="min-w-0">
           <p className="text-[13px] capitalize text-muted">
             {formatWeekday(selectedDate)}
-            {isToday && <span className="text-accent"> · сегодня</span>}
+            {isToday ? (
+              <span className="text-accent"> · сегодня</span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => selectDate(todayKey())}
+                className="tap-expand relative ml-1.5 normal-case text-accent"
+              >
+                · к сегодня
+              </button>
+            )}
           </p>
-          <h1 className="truncate font-display text-[30px] font-medium leading-[1.1] tracking-[-0.01em] text-ink">
+          <h1 className="truncate font-display text-[calc(30px*var(--display-scale,1))] font-medium leading-[1.1] tracking-[-0.01em] text-ink">
             {formatDayMonth(selectedDate)}
           </h1>
         </div>
         <div className="flex shrink-0 items-center gap-1.5 pt-1">
-          {!isToday && (
-            <button
-              type="button"
-              onClick={() => selectDate(todayKey())}
-              className="h-9 rounded-full bg-hover px-3 text-[13px] font-medium text-graphite active:bg-line"
-            >
-              Сегодня
-            </button>
-          )}
           <button
             type="button"
             aria-label={"Входящие: " + inboxCount}
@@ -79,6 +80,14 @@ export function DayHeader() {
             className="flex h-9 w-9 items-center justify-center rounded-full bg-hover text-graphite active:bg-line"
           >
             <Icon name="folder" size={19} />
+          </button>
+          <button
+            type="button"
+            aria-label="Оформление"
+            onClick={() => openSheet({ kind: "settings" })}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-hover text-graphite active:bg-line"
+          >
+            <Icon name="sliders" size={19} />
           </button>
         </div>
       </div>

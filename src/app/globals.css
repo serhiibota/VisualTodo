@@ -14,6 +14,7 @@
 
 :root {
   --app-height: 100vh;
+  /* Цвета и шрифты схем приходят из <style> в layout.tsx (lib/themes.ts, lib/appearance.ts) */
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
 }
@@ -23,7 +24,7 @@ html {
   height: -webkit-fill-available;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  background: #f7f5f0;
+  background: rgb(var(--c-bg));
 }
 
 body {
@@ -32,8 +33,9 @@ body {
   overflow: hidden;
   min-height: 100%;
   min-height: -webkit-fill-available;
-  background: #f7f5f0;
-  color: #232220;
+  background: rgb(var(--c-bg));
+  color: rgb(var(--c-text));
+  font-family: var(--font-ui);
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
@@ -58,7 +60,7 @@ body {
     font-size: max(16px, 1em);
   }
   :focus-visible {
-    outline: 2px solid #c4704f;
+    outline: 2px solid rgb(var(--c-accent));
     outline-offset: 2px;
   }
 }
@@ -101,7 +103,7 @@ body {
   /* Плавающая кнопка: над кнопкой Home / нижней панелью Safari */
   .fab {
     bottom: calc(20px + var(--safe-bottom));
-    box-shadow: 0 6px 18px rgba(35, 34, 32, 0.22);
+    box-shadow: 0 6px 18px rgb(var(--c-shade) / 0.22);
     transition: transform 160ms ease-out;
     -webkit-transform: translate3d(0, 0, 0);
   }
@@ -118,15 +120,15 @@ body {
     pointer-events: none;
   }
   .spine-solid {
-    background: #e3dfd8;
+    background: var(--c-spine);
   }
   /* Пунктир градиентом — один слой, без десятков DOM-узлов */
   .spine-dashed {
-    background-image: repeating-linear-gradient(to bottom, #d6d2ca 0 4px, transparent 4px 9px);
+    background-image: repeating-linear-gradient(to bottom, var(--c-dash) 0 4px, transparent 4px 9px);
   }
   .spine-fade {
     bottom: 50%;
-    background-image: repeating-linear-gradient(to bottom, #d6d2ca 0 4px, transparent 4px 9px);
+    background-image: repeating-linear-gradient(to bottom, var(--c-dash) 0 4px, transparent 4px 9px);
   }
 
   .flow-row {
@@ -160,9 +162,9 @@ body {
   }
   /* Поднятый блок — на сплошной «карточке»; тень растеризуется один раз вместе со слоем */
   .drag-layer.is-dragging {
-    background: #fffefb;
+    background: rgb(var(--c-surface));
     border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(35, 34, 32, 0.16);
+    box-shadow: 0 10px 28px rgb(var(--c-shade) / 0.18);
   }
   .drag-badge {
     display: none;
@@ -190,6 +192,7 @@ body {
 
   .sheet-backdrop {
     touch-action: none;
+    background: rgb(var(--c-shade) / var(--shade-a));
   }
 
   .sheet-panel {
@@ -199,7 +202,7 @@ body {
     will-change: transform;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    box-shadow: 0 -8px 30px rgba(35, 34, 32, 0.12);
+    box-shadow: 0 -8px 30px rgb(var(--c-shade) / 0.14);
   }
   .sheet-panel.is-open {
     transform: translate3d(0, 0, 0);

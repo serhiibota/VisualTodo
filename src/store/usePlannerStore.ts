@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { DEFAULT_APPEARANCE, type AppearanceSettings } from "@/lib/appearance";
 import { STORAGE_KEY } from "@/lib/constants";
 import { uid } from "@/lib/id";
 import { guessIcon } from "@/lib/taskIcons";
@@ -14,6 +15,7 @@ interface PersistedState {
   tags: Tag[];
   projects: Project[];
   seeded: boolean;
+  appearance: AppearanceSettings;
 }
 
 interface UiState {
@@ -44,6 +46,8 @@ interface Actions {
   updateTag: (id: string, patch: Partial<Omit<Tag, "id">>) => void;
   removeTag: (id: string) => void;
 
+  setAppearance: (patch: Partial<AppearanceSettings>) => void;
+
   seedIfEmpty: () => void;
 }
 
@@ -66,6 +70,7 @@ export const usePlannerStore = create<PlannerState>()(
       tags: [],
       projects: [],
       seeded: false,
+      appearance: DEFAULT_APPEARANCE,
 
       // Дата выставляется на клиенте после гидратации (у сервера другой часовой пояс).
       selectedDate: "",
@@ -135,6 +140,8 @@ export const usePlannerStore = create<PlannerState>()(
           return { tasks, tags: s.tags.filter((t) => t.id !== id) };
         }),
 
+      setAppearance: (patch) => set((s) => ({ appearance: { ...s.appearance, ...patch } })),
+
       seedIfEmpty: () => {
         const s = get();
         const today = todayKey();
@@ -155,6 +162,7 @@ export const usePlannerStore = create<PlannerState>()(
         tags: s.tags,
         projects: s.projects,
         seeded: s.seeded,
+        appearance: s.appearance,
       }),
       // v1 → v2: у задач появились иконка, собственный цвет и подзадачи.
       migrate: (persisted, version) => {
@@ -175,6 +183,11 @@ export const usePlannerStore = create<PlannerState>()(
           return { ...state, tasks };
         }
         return state;
+      },
+      // Сохранения без appearance (до появления настроек) получают значения по умолчанию
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<PersistedState>;
+        return { ...current, ...p, appearance: { ...DEFAULT_APPEARANCE, ...p.appearance } };
       },
       // Гидратация вручную на клиенте — без рассинхронизации SSR/CSR.
       skipHydration: true,

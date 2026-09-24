@@ -16,7 +16,8 @@ function TaskIconImpl({ name, size = 22, color = "currentColor", strokeWidth = 1
       height={size}
       viewBox="0 0 24 24"
       fill="none"
-      stroke={color}
+      // style, а не атрибут: var() в presentation-атрибутах SVG ненадёжен в старом Safari
+      style={{ stroke: color }}
       strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"

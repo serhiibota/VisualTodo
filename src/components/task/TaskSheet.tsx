@@ -174,10 +174,10 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
                   patch({ icon: key });
                   setIconTouched(true);
                 }}
-                className="flex h-10 items-center justify-center rounded-xl"
+                className="flex h-10 items-center justify-center rounded-xl text-graphite"
                 style={{ backgroundColor: on ? swatch.solid : "transparent" }}
               >
-                <TaskIcon name={key} size={20} color={on ? "#FFFFFF" : "#3A3936"} />
+                <TaskIcon name={key} size={20} color={on ? "#FFFFFF" : "currentColor"} />
               </button>
             );
           })}
@@ -212,7 +212,7 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
             aria-pressed={o.on}
             className={
               "h-9 rounded-xl text-[14px] transition-colors duration-200 " +
-              (o.on ? "bg-paper font-medium text-ink shadow-[0_1px_3px_rgba(35,34,32,0.12)]" : "text-muted")
+              (o.on ? "bg-paper font-medium text-ink shadow-[0_1px_3px_rgb(var(--c-shade)/0.12)]" : "text-muted")
             }
           >
             {o.label}

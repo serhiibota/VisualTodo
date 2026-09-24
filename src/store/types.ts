@@ -58,4 +58,5 @@ export type SheetState =
   | { kind: "task"; taskId: string | null; start?: number; inbox?: boolean }
   | { kind: "projects" }
   | { kind: "inbox" }
+  | { kind: "settings" }
   | null;

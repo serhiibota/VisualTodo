@@ -6,29 +6,22 @@ const config: Config = {
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
+      // Цвета — CSS-переменные текущей схемы (см. lib/themes.ts).
+      // Формат каналов сохраняет модификаторы прозрачности: bg-paper/70.
       colors: {
-        milk: "#F7F5F0",
-        paper: "#FFFEFB",
-        ink: "#232220",
-        graphite: "#3A3936",
-        muted: "#8C8984",
-        faint: "#B9B6B0",
-        line: "#E8E5DF",
-        hover: "#EFECE6",
-        accent: "#C4704F",
+        milk: "rgb(var(--c-bg) / <alpha-value>)",
+        paper: "rgb(var(--c-surface) / <alpha-value>)",
+        ink: "rgb(var(--c-text) / <alpha-value>)",
+        graphite: "rgb(var(--c-strong) / <alpha-value>)",
+        muted: "rgb(var(--c-muted) / <alpha-value>)",
+        faint: "rgb(var(--c-faint) / <alpha-value>)",
+        line: "rgb(var(--c-line) / <alpha-value>)",
+        hover: "rgb(var(--c-hover) / <alpha-value>)",
+        accent: "rgb(var(--c-accent) / <alpha-value>)",
       },
       fontFamily: {
-        sans: [
-          "-apple-system",
-          "BlinkMacSystemFont",
-          '"SF Pro Text"',
-          '"Segoe UI"',
-          "Roboto",
-          '"Helvetica Neue"',
-          "Arial",
-          "sans-serif",
-        ],
-        display: ["var(--font-display)", "Georgia", "serif"],
+        sans: ["var(--font-ui)"],
+        display: ["var(--font-display)"],
       },
       borderRadius: {
         "4xl": "28px",

@@ -114,7 +114,7 @@ export function BottomSheet({ open, onClose, title, children, footer }: BottomSh
         ref={backdropRef}
         onClick={onClose}
         className={
-          "sheet-backdrop absolute inset-0 bg-ink/35 transition-opacity duration-300 " +
+          "sheet-backdrop absolute inset-0 transition-opacity duration-300 " +
           (visible ? "opacity-100" : "opacity-0")
         }
       />
@@ -131,7 +131,7 @@ export function BottomSheet({ open, onClose, title, children, footer }: BottomSh
         >
           <div className="mx-auto h-[5px] w-10 rounded-full bg-line" />
           <div className="flex min-h-[48px] items-center justify-between gap-3 pb-1 pt-2">
-            <div className="min-w-0 flex-1 truncate font-display text-[22px] leading-tight text-ink">{title}</div>
+            <div className="min-w-0 flex-1 truncate font-display text-[calc(22px*var(--display-scale,1))] leading-tight text-ink">{title}</div>
             <button
               type="button"
               onClick={onClose}

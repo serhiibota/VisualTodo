@@ -1,15 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond } from "next/font/google";
+import { buildFontCss } from "@/lib/appearance";
+import { STORAGE_KEY } from "@/lib/constants";
+import { fontVariables } from "@/lib/fonts";
+import { AUTO_DARK, AUTO_LIGHT, buildThemeCss, THEMES } from "@/lib/themes";
 import "./globals.css";
-
-// Антиква только для крупных заголовков; основной текст — системный SF Pro:
-// он уже есть на iPhone, ничего не качаем и не тратим время на рендер шрифта.
-const display = Cormorant_Garamond({
-  subsets: ["latin", "cyrillic"],
-  weight: ["500", "600"],
-  display: "swap",
-  variable: "--font-display",
-});
 
 export const metadata: Metadata = {
   title: "Структура — план дня",
@@ -27,12 +21,35 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#F7F5F0",
+  themeColor: THEMES.milk.ui.bg,
 };
+
+const themeCss = buildThemeCss() + buildFontCss();
+
+// Фоны схем для theme-color — чтобы панель Safari сразу была нужного цвета
+const bgs: Record<string, string> = {};
+for (const key in THEMES) bgs[key] = THEMES[key as keyof typeof THEMES].ui.bg;
+
+// Выполняется до первой отрисовки: выставляет схему и шрифты из localStorage.
+const bootScript =
+  "(function(){try{var d=document.documentElement,a={};" +
+  "try{a=(JSON.parse(localStorage.getItem(" + JSON.stringify(STORAGE_KEY) + "))||{}).state.appearance||{}}catch(e){}" +
+  "var t=a.theme||'milk';d.setAttribute('data-theme',t);" +
+  "d.setAttribute('data-ui-font',a.uiFont||'system');" +
+  "d.setAttribute('data-display-font',a.displayFont||'cormorant');" +
+  "var b=" + JSON.stringify(bgs) + ";" +
+  "if(t==='auto')t=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'" + AUTO_DARK + "':'" + AUTO_LIGHT + "';" +
+  "var m=document.querySelector('meta[name=\"theme-color\"]');if(m&&b[t])m.setAttribute('content',b[t]);" +
+  "}catch(e){}})()";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru" className={display.variable}>
+    // data-* выставляет bootScript до гидратации — атрибуты на сервере и клиенте расходятся намеренно
+    <html lang="ru" className={fontVariables} suppressHydrationWarning>
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: themeCss }} />
+        <script dangerouslySetInnerHTML={{ __html: bootScript }} />
+      </head>
       <body>{children}</body>
     </html>
   );

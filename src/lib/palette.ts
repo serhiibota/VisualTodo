@@ -2,24 +2,34 @@ import type { ColorKey } from "@/store/types";
 
 export interface Swatch {
   label: string;
-  /** Насыщенный цвет: заливка капсулы (выполнено / идёт сейчас), чекбокс, нить */
+  /** Насыщенный цвет: заливка капсулы (выполнено / идёт сейчас), чекбокс, точки */
   solid: string;
-  /** Светлая заливка капсулы у предстоящей задачи */
+  /** Светлая (в тёмных схемах — глубокая) заливка предстоящей задачи */
   tint: string;
-  /** Цвет иконки на светлой заливке */
+  /** Цвет иконки на заливке tint */
   ink: string;
 }
 
-// Приглушённые «бумажные» цвета — как карандаши в японском ежедневнике.
-// Только сплошные HEX: никаких blend-режимов и полупрозрачных слоёв.
-export const PALETTE: Record<ColorKey, Swatch> = {
-  rose: { label: "Коралл", solid: "#E08E7B", tint: "#F8E6E0", ink: "#B8604D" },
-  clay: { label: "Терракота", solid: "#C27A56", tint: "#F3E5DB", ink: "#9A5534" },
-  sand: { label: "Охра", solid: "#D2A45A", tint: "#F6EDDC", ink: "#A07630" },
-  sage: { label: "Шалфей", solid: "#8FAA7E", tint: "#E7EEE2", ink: "#5F7D4F" },
-  sky: { label: "Небо", solid: "#7596B8", tint: "#E3EBF3", ink: "#4B6E93" },
-  lavender: { label: "Слива", solid: "#9A7FA8", tint: "#EEE7F1", ink: "#6F5480" },
-  mist: { label: "Графит", solid: "#4F5A6B", tint: "#E6E8EB", ink: "#3A4452" },
+const LABELS: Record<ColorKey, string> = {
+  rose: "Коралл",
+  clay: "Терракота",
+  sand: "Охра",
+  sage: "Шалфей",
+  sky: "Небо",
+  lavender: "Слива",
+  mist: "Графит",
 };
 
 export const COLOR_KEYS: ColorKey[] = ["rose", "clay", "sand", "sage", "sky", "lavender", "mist"];
+
+// Значения — CSS-переменные текущей схемы (lib/themes.ts). Ссылки на объекты
+// стабильны, поэтому смена схемы не ломает memo и не требует ререндера.
+export const PALETTE = {} as Record<ColorKey, Swatch>;
+for (const key of COLOR_KEYS) {
+  PALETTE[key] = {
+    label: LABELS[key],
+    solid: "var(--t-" + key + "-solid)",
+    tint: "var(--t-" + key + "-tint)",
+    ink: "var(--t-" + key + "-ink)",
+  };
+}

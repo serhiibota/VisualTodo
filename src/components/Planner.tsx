@@ -3,10 +3,12 @@
 import { DayHeader } from "@/components/header/DayHeader";
 import { InboxSheet } from "@/components/inbox/InboxSheet";
 import { ProjectsSheet } from "@/components/projects/ProjectsSheet";
+import { SettingsSheet } from "@/components/settings/SettingsSheet";
 import { TaskSheet } from "@/components/task/TaskSheet";
 import { Timeline } from "@/components/timeline/Timeline";
 import { Icon } from "@/components/ui/Icon";
 import { useAppHeight } from "@/hooks/useAppHeight";
+import { useApplyAppearance } from "@/hooks/useApplyAppearance";
 import { useHydrated } from "@/hooks/useHydrated";
 import { minutesNow, todayKey } from "@/lib/time";
 import { DAY_END, DEFAULT_START, SNAP_MIN } from "@/lib/constants";
@@ -16,6 +18,7 @@ import { usePlannerStore } from "@/store/usePlannerStore";
 export function Planner() {
   useAppHeight();
   const hydrated = useHydrated();
+  useApplyAppearance();
 
   return (
     <div className="app-shell flex flex-col bg-milk">
@@ -27,6 +30,7 @@ export function Planner() {
           <TaskSheet />
           <ProjectsSheet />
           <InboxSheet />
+          <SettingsSheet />
         </>
       ) : (
         <Skeleton />
