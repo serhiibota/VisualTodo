@@ -33,6 +33,14 @@ function SettingsContent() {
       <SectionTitle>Мой день</SectionTitle>
       <DayBoundsEditor />
 
+      <SectionTitle>Экран дня</SectionTitle>
+      <ToggleRow
+        label="Фильтр проектов под неделей"
+        note="Строка «Все · проекты». По умолчанию скрыта, чтобы не спорить с выбором дня; выделить проект можно и из «Проектов»."
+        on={appearance.showProjectBar}
+        onChange={(showProjectBar) => setAppearance({ showProjectBar })}
+      />
+
       <SectionTitle>Тушь</SectionTitle>
       <ThemeGrid group="ink" current={appearance.theme} onSelect={(theme) => setAppearance({ theme })} />
       <p className="mt-2 text-[12px] leading-5 text-muted">
@@ -228,6 +236,42 @@ function ThemeGrid({
         />
       ))}
     </div>
+  );
+}
+
+function ToggleRow({
+  label,
+  note,
+  on,
+  onChange,
+}: {
+  label: string;
+  note: string;
+  on: boolean;
+  onChange: (on: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={() => onChange(!on)}
+      className="flex w-full items-center gap-3 rounded-2xl bg-hover px-4 py-3 text-left"
+    >
+      <span className="min-w-0 flex-1">
+        <span className="block text-[16px] text-ink">{label}</span>
+        <span className="mt-0.5 block text-[12px] leading-[18px] text-muted">{note}</span>
+      </span>
+      {/* Переключатель: бегунок едет через transform */}
+      <span
+        className={"relative h-[30px] w-[50px] shrink-0 rounded-full transition-colors duration-200 " + (on ? "bg-ink" : "bg-line")}
+      >
+        <span
+          className="absolute left-[2px] top-[2px] h-[26px] w-[26px] rounded-full bg-paper shadow-[0_1px_3px_rgb(var(--c-shade)/0.25)] transition-transform duration-200"
+          style={{ transform: on ? "translate3d(20px,0,0)" : "translate3d(0,0,0)" }}
+        />
+      </span>
+    </button>
   );
 }
 

@@ -7,12 +7,15 @@ export interface AppearanceSettings {
   theme: ThemeKey;
   uiFont: UiFontKey;
   displayFont: DisplayFontKey;
+  /** Строка фильтра проектов под неделей. По умолчанию скрыта — не спорит с выбором дня */
+  showProjectBar: boolean;
 }
 
 export const DEFAULT_APPEARANCE: AppearanceSettings = {
   theme: "auto", // «Тушь с пометками» днём, «Суми» ночью
   uiFont: "system",
   displayFont: "cormorant",
+  showProjectBar: false,
 };
 
 const SYSTEM_STACK = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';

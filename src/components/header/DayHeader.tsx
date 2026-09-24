@@ -126,11 +126,7 @@ export function DayHeader() {
         <WeekStrip />
       </div>
 
-      {!freeMode && (
-        <div className="mt-1.5">
-          <ProjectFilter />
-        </div>
-      )}
+      {!freeMode && <ProjectFilter />}
     </header>
   );
 }
