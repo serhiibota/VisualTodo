@@ -18,6 +18,7 @@ const config: Config = {
         line: "rgb(var(--c-line) / <alpha-value>)",
         hover: "rgb(var(--c-hover) / <alpha-value>)",
         accent: "rgb(var(--c-accent) / <alpha-value>)",
+        danger: "rgb(var(--c-danger) / <alpha-value>)",
       },
       fontFamily: {
         sans: ["var(--font-ui)"],

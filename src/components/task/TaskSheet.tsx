@@ -302,7 +302,7 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
             type="button"
             onClick={remove}
             aria-label="Удалить"
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-hover text-[#A0524A] active:bg-line"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-hover text-danger active:bg-line"
           >
             <Icon name="trash" size={20} />
           </button>
