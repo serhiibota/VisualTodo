@@ -27,11 +27,23 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 function SettingsContent() {
   const appearance = usePlannerStore((s) => s.appearance);
   const setAppearance = usePlannerStore((s) => s.setAppearance);
+  const openSheet = usePlannerStore((s) => s.openSheet);
 
   return (
     <div className="pb-2">
       <SectionTitle>Мой день</SectionTitle>
       <DayBoundsEditor />
+
+      <SectionTitle>Проекты и теги</SectionTitle>
+      <button
+        type="button"
+        onClick={() => openSheet({ kind: "projects" })}
+        className="flex w-full items-center gap-3 rounded-2xl bg-hover px-4 py-3 text-left active:bg-line"
+      >
+        <Icon name="folder" size={18} className="shrink-0 text-graphite" />
+        <span className="min-w-0 flex-1 text-[16px] text-ink">Проекты и теги</span>
+        <Icon name="chevronRight" size={16} className="shrink-0 text-faint" />
+      </button>
 
       <SectionTitle>Экран дня</SectionTitle>
       <ToggleRow

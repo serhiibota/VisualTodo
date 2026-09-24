@@ -3,6 +3,7 @@
 import { DayHeader } from "@/components/header/DayHeader";
 import { FreeView } from "@/components/free/FreeView";
 import { InboxSheet } from "@/components/inbox/InboxSheet";
+import { ListsSheet } from "@/components/lists/ListsSheet";
 import { ProjectsSheet } from "@/components/projects/ProjectsSheet";
 import { SettingsSheet } from "@/components/settings/SettingsSheet";
 import { TaskSheet } from "@/components/task/TaskSheet";
@@ -30,6 +31,7 @@ export function Planner() {
           <TaskSheet />
           <ProjectsSheet />
           <InboxSheet />
+          <ListsSheet />
           <SettingsSheet />
         </>
       ) : (

@@ -15,6 +15,7 @@ const paths = {
   listCheck: "M10 6h10M10 12h10M10 18h10M3.5 6l1.2 1.2L7 5M3.5 12l1.2 1.2L7 11M3.5 18l1.2 1.2L7 17",
   cart: "M3 4h2l2.5 11h11L21 7H6M9 20h.01M18 20h.01",
   arrowRight: "M5 12h14M13 6l6 6-6 6",
+  note: "M6 3h9l4 4v14H6zM14 3v5h5M9 12h7M9 16h5",
   hourglass: "M7 3h10M7 21h10M8 3v2.5a4 4 0 002 3.5l2 1.5 2-1.5a4 4 0 002-3.5V3M8 21v-2.5a4 4 0 012-3.5l2-1.5 2 1.5a4 4 0 012 3.5V21",
   sliders: "M4 7h9M17 7h3M15 5v4M4 17h3M11 17h9M9 15v4",
   inbox: "M4 13l2.5-7h11l2.5 7v5a1 1 0 01-1 1H5a1 1 0 01-1-1zM4 13h4.5l1 2h5l1-2H20",

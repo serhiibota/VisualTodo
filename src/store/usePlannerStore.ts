@@ -165,7 +165,7 @@ export const usePlannerStore = create<PlannerState>()(
 
       addList: (title, kind) => {
         const id = uid();
-        set((s) => ({ lists: [...s.lists, { id, title, kind, items: [] }] }));
+        set((s) => ({ lists: [...s.lists, { id, title, kind, items: [], ...(kind === "note" ? { text: "" } : {}) }] }));
         return id;
       },
       updateList: (id, patch) =>

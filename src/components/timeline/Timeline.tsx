@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Icon } from "@/components/ui/Icon";
+import { Icon, type IconName } from "@/components/ui/Icon";
+import { LIST_KIND, listChipLabel } from "@/lib/lists";
 import { DAY_END, DEFAULT_START } from "@/lib/constants";
 import { buildFlow } from "@/lib/flow";
 import { animateScrollTop, focusOffset } from "@/lib/scroll";
@@ -61,10 +62,10 @@ export function Timeline() {
   }, [selectedDate]);
 
   const onOpen = useCallback((id: string) => openSheet({ kind: "task", taskId: id }), [openSheet]);
-  // «2/5» для прикреплённых списков — строка-примитив, чтобы не ломать memo строк
-  const listProgress = useMemo(() => {
-    const map: Record<string, string> = {};
-    for (const l of lists) map[l.id] = l.items.filter((it) => it.done).length + "/" + l.items.length;
+  // Чипы прикреплённого: объекты пересоздаются только при изменении списков — memo строк не ломается
+  const listChips = useMemo(() => {
+    const map: Record<string, { icon: IconName; label: string }> = {};
+    for (const l of lists) map[l.id] = { icon: LIST_KIND[l.kind].icon, label: listChipLabel(l) };
     return map;
   }, [lists]);
   const onOpenList = useCallback((listId: string) => openSheet({ kind: "list", listId }), [openSheet]);
@@ -196,7 +197,7 @@ export function Timeline() {
                 onOpen={onOpen}
                 onToggle={toggleTask}
                 onMove={onMove}
-              listProgress={task.listId ? listProgress[task.listId] ?? null : null}
+              listChip={task.listId ? listChips[task.listId] ?? null : null}
               onOpenList={onOpenList}
               />
             );

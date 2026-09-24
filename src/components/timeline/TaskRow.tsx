@@ -2,7 +2,7 @@
 
 import { memo, useEffect, useRef } from "react";
 import { Checkbox } from "@/components/ui/Checkbox";
-import { Icon } from "@/components/ui/Icon";
+import { Icon, type IconName } from "@/components/ui/Icon";
 import { DAY_END, PILL_PX_PER_MIN, pillHeight, SNAP_MIN } from "@/lib/constants";
 import { PALETTE } from "@/lib/palette";
 import { formatClock, formatDuration } from "@/lib/time";
@@ -25,8 +25,8 @@ interface TaskRowProps {
   onOpen: (id: string) => void;
   onToggle: (id: string) => void;
   onMove: (id: string, start: number) => void;
-  /** Прогресс прикреплённого списка «2/5» (null — списка нет) */
-  listProgress: string | null;
+  /** Прикреплённый список/заметка: иконка и «2/5» или «заметка» (null — нет) */
+  listChip: { icon: IconName; label: string } | null;
   onOpenList: (listId: string) => void;
 }
 
@@ -56,7 +56,7 @@ function TaskRowImpl({
   onOpen,
   onToggle,
   onMove,
-  listProgress,
+  listChip: attachedChip,
   onOpenList,
 }: TaskRowProps) {
   const base = PALETTE[task.color] ?? PALETTE.mist;
@@ -276,7 +276,7 @@ function TaskRowImpl({
   };
 
   const subDone = task.subtasks.filter((st) => st.done).length;
-  const hasList = !!task.listId && listProgress !== null;
+  const hasList = !!task.listId && attachedChip !== null;
   const hasMeta = task.subtasks.length > 0 || task.links.length > 0 || !!projectName || overlaps || hasList;
   const showMeta = hasMeta && (tall || height >= 70);
 
@@ -289,11 +289,11 @@ function TaskRowImpl({
         e.stopPropagation();
         onOpenList(task.listId as string);
       }}
-      aria-label={"Открыть список, отмечено " + listProgress}
+      aria-label={"Открыть прикреплённое: " + attachedChip?.label}
       className="tap-expand relative inline-flex shrink-0 items-center gap-1 rounded-full bg-hover px-1.5 py-px text-[12px] tabular-nums text-graphite"
     >
-      <Icon name="listCheck" size={12} />
-      {listProgress}
+      <Icon name={attachedChip?.icon ?? "listCheck"} size={12} />
+      {attachedChip?.label}
     </button>
   ) : null;
 

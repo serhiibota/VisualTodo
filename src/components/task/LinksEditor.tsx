@@ -66,7 +66,7 @@ export function LinksEditor({ links, onChange }: LinksEditorProps) {
         </ul>
       )}
 
-      <div className="overflow-hidden rounded-2xl bg-hover">
+      <div className="field-shell overflow-hidden rounded-2xl bg-hover">
         <input
           type="url"
           inputMode="url"

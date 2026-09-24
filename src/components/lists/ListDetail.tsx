@@ -1,17 +1,108 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
+import { LIST_KIND, listSummary } from "@/lib/lists";
 import { usePlannerStore } from "@/store/usePlannerStore";
 import type { ListItem, TaskList } from "@/store/types";
 
+/** textarea, растущая по содержимому: длинное название переносится, а не обрезается */
+function useAutoHeight(value: string) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }, [value]);
+  return ref;
+}
+
 /**
- * Один список. Быстрое добавление сверху (Enter — и сразу следующий пункт,
- * клавиатура не прячется). В режиме «покупки» отмеченное уезжает вниз
- * в «В корзине» и очищается одной кнопкой — список переиспользуется.
+ * Один список или заметка. Сверху — только название и тихая строка
+ * «Чеклист · 1 из 3», дальше сразу работа: поле добавления и пункты.
+ * Редкие действия (смена типа, удаление) — мелко внизу.
  */
 export function ListDetail({ list, onBack }: { list: TaskList; onBack: () => void }) {
-  const { addListItem, updateList, removeList, clearDoneItems } = usePlannerStore.getState();
+  const { updateList, removeList, clearDoneItems } = usePlannerStore.getState();
+  const titleRef = useAutoHeight(list.title);
+  const kind = LIST_KIND[list.kind];
+
+  return (
+    <div>
+      <button type="button" onClick={onBack} className="-ml-1 flex items-center gap-1 text-[14px] text-muted">
+        <Icon name="chevronLeft" size={16} /> Все
+      </button>
+
+      <textarea
+        ref={titleRef}
+        rows={1}
+        value={list.title}
+        onChange={(e) => updateList(list.id, { title: e.target.value.replace(/\n/g, " ") })}
+        onBlur={(e) => !e.target.value.trim() && updateList(list.id, { title: "Без названия" })}
+        aria-label="Название"
+        className="mt-2 block w-full resize-none overflow-hidden bg-transparent text-[22px] font-semibold leading-[28px] tracking-[-0.01em] text-ink"
+      />
+      <p className="mt-0.5 flex items-center gap-1.5 text-[13px] text-muted">
+        <Icon name={kind.icon} size={14} />
+        {kind.label}
+        {list.kind !== "note" && " · " + listSummary(list)}
+      </p>
+
+      {list.kind === "note" ? <NoteBody list={list} /> : <ItemsBody list={list} />}
+
+      {/* Редкие действия */}
+      <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-3 text-[13px]">
+        {list.kind !== "note" && (
+          <button
+            type="button"
+            onClick={() => updateList(list.id, { kind: list.kind === "check" ? "shopping" : "check" })}
+            className="flex items-center gap-1.5 text-muted"
+          >
+            <Icon name={list.kind === "check" ? "cart" : "listCheck"} size={14} />
+            {list.kind === "check" ? "Сделать списком покупок" : "Сделать чеклистом"}
+          </button>
+        )}
+        {list.kind === "check" && list.items.some((it) => it.done) && (
+          <button type="button" onClick={() => clearDoneItems(list.id)} className="text-muted">
+            Убрать выполненные
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => {
+            if (window.confirm("Удалить «" + list.title + "»?")) {
+              removeList(list.id);
+              onBack();
+            }
+          }}
+          className="ml-auto text-danger"
+        >
+          Удалить
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function NoteBody({ list }: { list: TaskList }) {
+  const updateList = usePlannerStore((s) => s.updateList);
+  const ref = useAutoHeight(list.text ?? "");
+  return (
+    <textarea
+      ref={ref}
+      value={list.text ?? ""}
+      onChange={(e) => updateList(list.id, { text: e.target.value })}
+      placeholder="Мысли, протокол встречи, адрес, код домофона…"
+      rows={6}
+      className="field-shell mt-4 block min-h-[160px] w-full resize-none overflow-hidden rounded-2xl bg-hover px-4 py-3 text-[16px] leading-6 text-ink placeholder:text-faint"
+    />
+  );
+}
+
+function ItemsBody({ list }: { list: TaskList }) {
+  const addListItem = usePlannerStore((s) => s.addListItem);
+  const clearDoneItems = usePlannerStore((s) => s.clearDoneItems);
   const [text, setText] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const shopping = list.kind === "shopping";
@@ -28,37 +119,8 @@ export function ListDetail({ list, onBack }: { list: TaskList; onBack: () => voi
   const done = list.items.filter((it) => it.done);
 
   return (
-    <div>
-      <button type="button" onClick={onBack} className="-ml-1 mb-2 flex items-center gap-1 text-[14px] text-muted">
-        <Icon name="chevronLeft" size={16} /> Все списки
-      </button>
-
-      <input
-        value={list.title}
-        onChange={(e) => updateList(list.id, { title: e.target.value })}
-        onBlur={(e) => !e.target.value.trim() && updateList(list.id, { title: "Без названия" })}
-        className="w-full bg-transparent text-[22px] font-semibold tracking-[-0.01em] text-ink"
-      />
-
-      <div className="mt-2 grid grid-cols-2 gap-1 rounded-2xl bg-hover p-1">
-        {(["check", "shopping"] as const).map((k) => (
-          <button
-            key={k}
-            type="button"
-            aria-pressed={list.kind === k}
-            onClick={() => updateList(list.id, { kind: k })}
-            className={
-              "flex h-8 items-center justify-center gap-1.5 rounded-xl text-[13px] transition-colors duration-200 " +
-              (list.kind === k ? "bg-paper font-medium text-ink shadow-[0_1px_3px_rgb(var(--c-shade)/0.12)]" : "text-muted")
-            }
-          >
-            <Icon name={k === "shopping" ? "cart" : "listCheck"} size={14} />
-            {k === "shopping" ? "Покупки" : "Чеклист"}
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-3 flex items-center gap-2 rounded-2xl bg-hover pl-4 pr-1.5">
+    <>
+      <div className="field-shell mt-4 flex items-center gap-2 rounded-2xl bg-hover pl-4 pr-1.5">
         <input
           ref={inputRef}
           value={text}
@@ -69,35 +131,42 @@ export function ListDetail({ list, onBack }: { list: TaskList; onBack: () => voi
               add();
             }
           }}
-          placeholder={shopping ? "Что купить?" : "Добавить пункт"}
+          placeholder={shopping ? "Что купить?" : "Новый пункт"}
           enterKeyHint="enter"
           className="h-12 min-w-0 flex-1 bg-transparent text-[16px] text-ink placeholder:text-faint"
         />
-        <button
-          type="button"
-          onClick={add}
-          disabled={!text.trim()}
-          aria-label="Добавить пункт"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink text-milk disabled:opacity-25"
-        >
-          <Icon name="plus" size={18} strokeWidth={2} />
-        </button>
+        {text.trim() && (
+          <button
+            type="button"
+            onClick={add}
+            aria-label="Добавить пункт"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ink text-milk"
+          >
+            <Icon name="plus" size={18} strokeWidth={2} />
+          </button>
+        )}
       </div>
 
       {/* В чеклисте порядок не меняется; в покупках отмеченное уходит вниз */}
-      <ul className="mt-3">
+      <ul className="mt-2">
         {(shopping ? open : list.items).map((it) => (
           <ItemRow key={it.id} list={list} item={it} />
         ))}
       </ul>
 
+      {!shopping && open.length > 0 && (
+        <p className="mt-2 flex items-center gap-1 text-[12px] text-faint">
+          <Icon name="inbox" size={13} className="shrink-0" /> — отправить пункт во «Входящие» и поставить в день
+        </p>
+      )}
+
       {shopping && done.length > 0 && (
         <>
-          <div className="mt-4 flex items-center justify-between">
+          <div className="mt-5 flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
               В корзине · {done.length}
             </span>
-            <button type="button" onClick={() => clearDoneItems(list.id)} className="text-[13px] text-accent">
+            <button type="button" onClick={() => clearDoneItems(list.id)} className="text-[13px] text-graphite underline">
               Очистить
             </button>
           </div>
@@ -109,31 +178,14 @@ export function ListDetail({ list, onBack }: { list: TaskList; onBack: () => voi
         </>
       )}
 
-      {!shopping && done.length > 0 && (
-        <button type="button" onClick={() => clearDoneItems(list.id)} className="mt-3 text-[13px] text-accent">
-          Убрать выполненные ({done.length})
-        </button>
-      )}
-
       {list.items.length === 0 && (
-        <p className="py-6 text-center text-[14px] text-muted">
-          {shopping ? "Список пуст — добавляйте по одному слову." : "Пока пусто."}
+        <p className="py-6 text-center text-[14px] leading-6 text-muted">
+          {shopping ? "Добавляйте по одному слову —" : "Пишите пункт и жмите «Ввод» —"}
+          <br />
+          клавиатура не закроется.
         </p>
       )}
-
-      <button
-        type="button"
-        onClick={() => {
-          if (window.confirm("Удалить список «" + list.title + "»?")) {
-            removeList(list.id);
-            onBack();
-          }
-        }}
-        className="mt-6 text-[13px] text-danger"
-      >
-        Удалить список
-      </button>
-    </div>
+    </>
   );
 }
 
@@ -162,17 +214,18 @@ function ItemRow({ list, item }: { list: TaskList; item: ListItem }) {
         <button
           type="button"
           aria-label={"«" + item.title + "» во входящие"}
+          title="Во входящие"
           onClick={() => listItemToInbox(list.id, item.id)}
-          className="tap-expand relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted active:bg-line"
+          className="tap-expand relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-faint active:bg-line"
         >
-          <Icon name="arrowRight" size={15} />
+          <Icon name="inbox" size={16} />
         </button>
       )}
       <button
         type="button"
         aria-label={"Удалить «" + item.title + "»"}
         onClick={() => removeListItem(list.id, item.id)}
-        className="tap-expand relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted active:bg-line"
+        className="tap-expand relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-faint active:bg-line"
       >
         <Icon name="close" size={14} />
       </button>

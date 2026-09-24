@@ -59,9 +59,16 @@ body {
   select {
     font-size: max(16px, 1em);
   }
+  /* Обводка фокуса — только для кнопок и ссылок с клавиатуры. Текстовые поля
+     iOS Safari всегда считает :focus-visible, и они получали прямоугольную
+     рамку цвета акцента (в «Туши» — красную) поверх скруглённой плашки */
   :focus-visible {
     outline: 2px solid rgb(var(--c-accent));
     outline-offset: 2px;
+  }
+  input:focus-visible,
+  textarea:focus-visible {
+    outline: none;
   }
 }
 
@@ -316,5 +323,15 @@ body {
     100% {
       box-shadow: 0 0 0 1px rgb(var(--c-line));
     }
+  }
+}
+
+@layer components {
+  /* Плашка с полем ввода: при фокусе — мягкая обводка цветом текста по скруглению */
+  .field-shell {
+    transition: box-shadow 160ms ease;
+  }
+  .field-shell:focus-within {
+    box-shadow: inset 0 0 0 1.5px rgb(var(--c-strong) / 0.35);
   }
 }

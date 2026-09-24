@@ -49,15 +49,17 @@ export interface ListItem {
 }
 
 /**
- * Список живёт дольше одного дня: продукты, «взять в поездку».
- * shopping — режим покупок: отмеченное уезжает вниз и очищается одной кнопкой,
- * чтобы список можно было переиспользовать.
+ * Список или заметка — живут дольше одного дня и прикрепляются к блокам.
+ * check — чеклист; shopping — покупки (отмеченное уезжает вниз и очищается
+ * одной кнопкой, список переиспользуется); note — мемо, свободный текст.
  */
 export interface TaskList {
   id: string;
   title: string;
-  kind: "check" | "shopping";
+  kind: "check" | "shopping" | "note";
   items: ListItem[];
+  /** Текст заметки (только для kind: "note") */
+  text?: string;
 }
 
 export interface Tag {
@@ -83,7 +85,8 @@ export interface DayBounds {
 export type SheetState =
   | { kind: "task"; taskId: string | null; start?: number; duration?: number; inbox?: boolean }
   | { kind: "projects" }
-  | { kind: "inbox"; tab?: "inbox" | "lists" }
+  | { kind: "inbox" }
+  | { kind: "lists" }
   | { kind: "list"; listId: string }
   | { kind: "settings" }
   | null;

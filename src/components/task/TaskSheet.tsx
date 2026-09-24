@@ -7,6 +7,7 @@ import { TaskPill } from "@/components/timeline/TaskPill";
 import { TaskIcon } from "@/components/ui/TaskIcon";
 import { DAY_END, DEFAULT_START, pillHeight } from "@/lib/constants";
 import { COLOR_KEYS, PALETTE } from "@/lib/palette";
+import { LIST_KIND, listSummary } from "@/lib/lists";
 import { guessIcon, TASK_ICON_KEYS } from "@/lib/taskIcons";
 import { formatClock, formatDuration, parseClock } from "@/lib/time";
 import { usePlannerStore } from "@/store/usePlannerStore";
@@ -102,10 +103,13 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
 
   // ---------- Прикреплённый список ----------
   const attached = draft.listId ? lists.find((l) => l.id === draft.listId) : undefined;
-  const createListForTask = () => {
+  const createForTask = (kind: "list" | "note") => {
     const base = draft.title.trim() || "Блок";
     const shopping = draft.icon === "cart";
-    const id = addList(shopping ? base : base + " — план", shopping ? "shopping" : "check");
+    const id =
+      kind === "note"
+        ? addList(base + " — заметка", "note")
+        : addList(shopping ? base : base + " — план", shopping ? "shopping" : "check");
     patch({ listId: id });
   };
   const openAttached = () => {
@@ -244,7 +248,7 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
 
       {!inInbox && (
         <div className="mt-2 flex items-center gap-2">
-          <label className="flex h-11 flex-1 items-center justify-between rounded-2xl bg-hover px-4">
+          <label className="field-shell flex h-11 flex-1 items-center justify-between rounded-2xl bg-hover px-4">
             <span className="text-[13px] text-muted">Начало</span>
             <input
               type="time"
@@ -269,16 +273,14 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
       <Label>Длительность · {formatDuration(draft.duration)}</Label>
       <DurationPicker value={draft.duration} max={maxDuration} onChange={(duration) => patch({ duration })} />
 
-      <Label>Список</Label>
+      <Label>Список или заметка</Label>
       {attached ? (
         <div className="flex items-center gap-2 rounded-2xl bg-hover py-1.5 pl-4 pr-1.5">
-          <Icon name={attached.kind === "shopping" ? "cart" : "listCheck"} size={18} className="shrink-0 text-graphite" />
+          <Icon name={LIST_KIND[attached.kind].icon} size={18} className="shrink-0 text-graphite" />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[15px] font-medium text-ink">{attached.title}</span>
-            <span className="block text-[12px] tabular-nums text-muted">
-              {attached.items.length
-                ? attached.items.filter((it) => it.done).length + " из " + attached.items.length
-                : "пока пусто"}
+            <span className="block truncate text-[12px] tabular-nums text-muted">
+              {LIST_KIND[attached.kind].label.toLowerCase()} · {listSummary(attached)}
             </span>
           </span>
           <button
@@ -291,7 +293,7 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
           </button>
           <button
             type="button"
-            aria-label="Открепить список"
+            aria-label="Открепить"
             onClick={() => patch({ listId: null })}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted active:bg-line"
           >
@@ -305,13 +307,16 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
               {l.title}
             </Chip>
           ))}
-          <Chip on={false} onClick={createListForTask}>
-            + Новый список для блока
+          <Chip on={false} onClick={() => createForTask("list")}>
+            + Список для блока
+          </Chip>
+          <Chip on={false} onClick={() => createForTask("note")}>
+            + Заметка
           </Chip>
         </div>
       )}
       <p className="mt-1.5 text-[12px] leading-5 text-muted">
-        План встречи, продукты, что взять с собой — откроется с ленты тапом по «списку» у блока.
+        План встречи, продукты, протокол — откроется с ленты тапом по значку у блока.
       </p>
 
       <Label>Подзадачи</Label>
@@ -356,7 +361,7 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
         onChange={(e) => patch({ description: e.target.value })}
         placeholder="Детали, мысли…"
         rows={3}
-        className="w-full resize-none rounded-2xl bg-hover px-4 py-3 text-[16px] leading-6 text-ink placeholder:text-faint"
+        className="field-shell w-full resize-none rounded-2xl bg-hover px-4 py-3 text-[16px] leading-6 text-ink placeholder:text-faint"
       />
 
       <Label>Ресурсы</Label>

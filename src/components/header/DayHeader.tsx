@@ -76,7 +76,7 @@ export function DayHeader() {
           </button>
           <button
             type="button"
-            aria-label={"Входящие и списки: " + inboxCount}
+            aria-label={"Входящие: " + inboxCount}
             onClick={() => openSheet({ kind: "inbox" })}
             className="relative flex h-9 w-9 items-center justify-center rounded-full bg-hover text-graphite active:bg-line"
           >
@@ -89,11 +89,11 @@ export function DayHeader() {
           </button>
           <button
             type="button"
-            aria-label="Проекты и теги"
-            onClick={() => openSheet({ kind: "projects" })}
+            aria-label="Списки и заметки"
+            onClick={() => openSheet({ kind: "lists" })}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-hover text-graphite active:bg-line"
           >
-            <Icon name="folder" size={19} />
+            <Icon name="listCheck" size={19} />
           </button>
           <button
             type="button"
