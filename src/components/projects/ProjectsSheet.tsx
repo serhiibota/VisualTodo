@@ -113,7 +113,7 @@ function ColorDot({ color, onChange }: { color: ColorKey; onChange: (c: ColorKey
       aria-label={"Цвет: " + PALETTE[color].label + ". Сменить"}
       onClick={() => onChange(next)}
       className="tap-expand relative h-5 w-5 shrink-0 rounded-full"
-      style={{ backgroundColor: PALETTE[color].tint, boxShadow: "inset 0 0 0 5px " + PALETTE[color].solid }}
+      style={{ backgroundColor: PALETTE[color].tint, boxShadow: "inset 0 0 0 5px " + PALETTE[color].mark }}
     />
   );
 }

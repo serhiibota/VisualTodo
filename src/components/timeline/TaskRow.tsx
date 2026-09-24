@@ -48,10 +48,15 @@ function TaskRowImpl({
   onToggle,
   onMove,
 }: TaskRowProps) {
-  const swatch = PALETTE[task.color] ?? PALETTE.mist;
+  const base = PALETTE[task.color] ?? PALETTE.mist;
   const height = pillHeight(task.duration);
   const end = task.start + task.duration;
   const active = progress !== null && !task.done;
+  // У текущего блока схема может задать общий цвет «сейчас» (киноварь в «Туши»);
+  // если не задала — var() откатится к цвету самой задачи
+  const swatch = active
+    ? { ...base, solid: "var(--c-now, " + base.solid + ")", ink: "var(--c-now, " + base.ink + ")" }
+    : base;
   const fill = task.done ? 1 : active ? progress : 0;
   const tall = height >= 96;
 
@@ -278,8 +283,8 @@ function TaskRowImpl({
         {/* Плашка нового времени — видна только во время перетаскивания */}
         <span
           ref={badgeRef}
-          className="drag-badge pointer-events-none absolute left-0 top-0 z-[2] rounded-full px-2 py-1 text-[11px] font-semibold tabular-nums text-white"
-          style={{ backgroundColor: swatch.solid }}
+          className="drag-badge pointer-events-none absolute left-0 top-0 z-[2] rounded-full px-2 py-1 text-[11px] font-semibold tabular-nums"
+          style={{ backgroundColor: swatch.solid, color: "var(--c-on-solid)" }}
         />
         {/* Время: начало у верха капсулы, конец — у низа */}
         <div className="relative w-[42px] shrink-0 text-right text-[11px] tabular-nums leading-none text-muted">

@@ -143,11 +143,13 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
             aria-label={PALETTE[key].label}
             aria-pressed={draft.color === key}
             onClick={() => patch({ color: key })}
-            className="tap-expand relative flex h-8 w-8 items-center justify-center rounded-full"
-            style={{ backgroundColor: PALETTE[key].solid }}
-          >
-            {draft.color === key && <Icon name="check" size={16} strokeWidth={2.4} className="text-white" />}
-          </button>
+            className="tap-expand relative h-8 w-8 rounded-full transition-shadow duration-200"
+            style={{
+              backgroundColor: PALETTE[key].mark,
+              // выбор — кольцом, а не галочкой: на светлых метках «Суми» белая галочка не видна
+              boxShadow: draft.color === key ? "0 0 0 2px rgb(var(--c-surface)), 0 0 0 4px rgb(var(--c-text))" : "none",
+            }}
+          />
         ))}
         <button
           type="button"
@@ -177,7 +179,7 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
                 className="flex h-10 items-center justify-center rounded-xl text-graphite"
                 style={{ backgroundColor: on ? swatch.solid : "transparent" }}
               >
-                <TaskIcon name={key} size={20} color={on ? "#FFFFFF" : "currentColor"} />
+                <TaskIcon name={key} size={20} color={on ? "var(--c-on-solid)" : "currentColor"} />
               </button>
             );
           })}
@@ -190,9 +192,9 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
           onClick={() => patch({ done: !draft.done })}
           className={
             "mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-2xl text-[15px] font-medium transition-colors duration-200 " +
-            (draft.done ? "text-white" : "bg-hover text-graphite")
+            (draft.done ? "" : "bg-hover text-graphite")
           }
-          style={draft.done ? { backgroundColor: swatch.solid } : undefined}
+          style={draft.done ? { backgroundColor: swatch.solid, color: "var(--c-on-solid)" } : undefined}
         >
           <Icon name="check" size={18} strokeWidth={2} />
           {draft.done ? "Выполнено" : "Отметить выполненным"}
@@ -262,7 +264,7 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
               Без проекта
             </Chip>
             {projects.map((p) => (
-              <Chip key={p.id} on={draft.projectId === p.id} dot={PALETTE[p.color].solid} onClick={() => patch({ projectId: p.id })}>
+              <Chip key={p.id} on={draft.projectId === p.id} dot={PALETTE[p.color].mark} onClick={() => patch({ projectId: p.id })}>
                 {p.name}
               </Chip>
             ))}
@@ -275,7 +277,7 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
           <Label>Теги</Label>
           <div className="flex flex-wrap gap-1.5">
             {tags.map((t) => (
-              <Chip key={t.id} on={draft.tagIds.includes(t.id)} dot={PALETTE[t.color].solid} onClick={() => toggleTag(t.id)}>
+              <Chip key={t.id} on={draft.tagIds.includes(t.id)} dot={PALETTE[t.color].mark} onClick={() => toggleTag(t.id)}>
                 {t.name}
               </Chip>
             ))}

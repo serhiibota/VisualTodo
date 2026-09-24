@@ -27,18 +27,14 @@ function SettingsContent() {
 
   return (
     <div className="pb-2">
-      <SectionTitle>Цветовая схема</SectionTitle>
-      <div className="grid grid-cols-2 gap-2.5">
-        {THEME_OPTIONS.map((opt) => (
-          <ThemeCard
-            key={opt.key}
-            themeKey={opt.key}
-            label={opt.label}
-            selected={appearance.theme === opt.key}
-            onSelect={() => setAppearance({ theme: opt.key })}
-          />
-        ))}
-      </div>
+      <SectionTitle>Тушь</SectionTitle>
+      <ThemeGrid group="ink" current={appearance.theme} onSelect={(theme) => setAppearance({ theme })} />
+      <p className="mt-2 text-[12px] leading-5 text-muted">
+        Почти монохром, как в бумажном ежедневнике. Цветом отмечено только то, что идёт сейчас.
+      </p>
+
+      <SectionTitle>Цветные</SectionTitle>
+      <ThemeGrid group="color" current={appearance.theme} onSelect={(theme) => setAppearance({ theme })} />
 
       <SectionTitle>Шрифт интерфейса</SectionTitle>
       <ul className="overflow-hidden rounded-2xl bg-hover">
@@ -102,6 +98,30 @@ function SettingsContent() {
   );
 }
 
+function ThemeGrid({
+  group,
+  current,
+  onSelect,
+}: {
+  group: "ink" | "color";
+  current: ThemeKey;
+  onSelect: (key: ThemeKey) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2.5">
+      {THEME_OPTIONS.filter((o) => o.group === group).map((opt) => (
+        <ThemeCard
+          key={opt.key}
+          themeKey={opt.key}
+          label={opt.label}
+          selected={current === opt.key}
+          onSelect={() => onSelect(opt.key)}
+        />
+      ))}
+    </div>
+  );
+}
+
 function Radio({ on }: { on: boolean }) {
   return (
     <span
@@ -157,19 +177,20 @@ function ThemeCard({
 
 function MiniDay({ theme, half }: { theme: ThemeDef; half?: boolean }) {
   const { ui, tasks } = theme;
+  // Как на экране дня: выполнено → текущий (цвет «сейчас», если он есть у схемы) → предстоящий
   const rows = [
-    { tone: tasks.rose, h: 16, fill: 1, w: 70 },
-    { tone: tasks.sky, h: 26, fill: 0.5, w: 85 },
-    { tone: tasks.sage, h: 16, fill: 0, w: 55 },
+    { tone: tasks.rose, h: 16, fill: 1, w: 70, now: false },
+    { tone: tasks.sky, h: 26, fill: 0.5, w: 85, now: true },
+    { tone: tasks.sage, h: 16, fill: 0, w: 55, now: false },
   ];
   return (
     <div className="relative flex-1 px-3 py-2" style={{ backgroundColor: ui.bg }}>
-      <div className="absolute bottom-2 top-2 w-[2px]" style={{ left: 22, backgroundColor: ui.spine }} />
+      <div className="absolute bottom-2 top-2" style={{ left: 22, width: ui.spineWidth ?? 2, backgroundColor: ui.spine }} />
       <div className="relative flex flex-col gap-1.5">
         {rows.map((r, i) => (
           <div key={i} className="flex items-center gap-2">
             <div className="relative w-[18px] overflow-hidden rounded-full" style={{ height: r.h, backgroundColor: r.tone.tint }}>
-              <div className="absolute inset-x-0 top-0" style={{ height: r.h * r.fill, backgroundColor: r.tone.solid }} />
+              <div className="absolute inset-x-0 top-0" style={{ height: r.h * r.fill, backgroundColor: r.now && ui.now ? ui.now : r.tone.solid }} />
             </div>
             <div className="flex-1">
               <div className="h-[5px] rounded-full" style={{ width: (half ? r.w - 15 : r.w) + "%", backgroundColor: ui.text, opacity: 0.85 }} />

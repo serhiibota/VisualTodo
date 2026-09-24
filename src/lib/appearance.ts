@@ -10,7 +10,7 @@ export interface AppearanceSettings {
 }
 
 export const DEFAULT_APPEARANCE: AppearanceSettings = {
-  theme: "milk",
+  theme: "auto", // «Тушь с пометками» днём, «Суми» ночью
   uiFont: "system",
   displayFont: "cormorant",
 };

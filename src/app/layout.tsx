@@ -21,7 +21,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: THEMES.milk.ui.bg,
+  themeColor: THEMES[AUTO_LIGHT].ui.bg,
 };
 
 const themeCss = buildThemeCss() + buildFontCss();
@@ -34,7 +34,7 @@ for (const key in THEMES) bgs[key] = THEMES[key as keyof typeof THEMES].ui.bg;
 const bootScript =
   "(function(){try{var d=document.documentElement,a={};" +
   "try{a=(JSON.parse(localStorage.getItem(" + JSON.stringify(STORAGE_KEY) + "))||{}).state.appearance||{}}catch(e){}" +
-  "var t=a.theme||'milk';d.setAttribute('data-theme',t);" +
+  "var t=a.theme||'auto';d.setAttribute('data-theme',t);" +
   "d.setAttribute('data-ui-font',a.uiFont||'system');" +
   "d.setAttribute('data-display-font',a.displayFont||'cormorant');" +
   "var b=" + JSON.stringify(bgs) + ";" +

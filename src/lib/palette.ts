@@ -8,6 +8,8 @@ export interface Swatch {
   tint: string;
   /** Цвет иконки на заливке tint */
   ink: string;
+  /** Цвет категории в пикерах, точках проектов и тегов */
+  mark: string;
 }
 
 const LABELS: Record<ColorKey, string> = {
@@ -31,5 +33,6 @@ for (const key of COLOR_KEYS) {
     solid: "var(--t-" + key + "-solid)",
     tint: "var(--t-" + key + "-tint)",
     ink: "var(--t-" + key + "-ink)",
+    mark: "var(--t-" + key + "-mark)",
   };
 }

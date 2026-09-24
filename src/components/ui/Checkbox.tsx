@@ -34,7 +34,7 @@ export function Checkbox({ checked, onChange, color, size = 22, label }: Checkbo
         onChange();
       }}
     >
-      {checked && <Icon name="check" size={size - 8} strokeWidth={2.4} className="text-white" />}
+      {checked && <Icon name="check" size={size - 8} strokeWidth={2.4} style={{ color: "var(--c-on-solid)" }} />}
     </button>
   );
 }

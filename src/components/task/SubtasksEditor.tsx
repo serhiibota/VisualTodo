@@ -37,7 +37,7 @@ export function SubtasksEditor({ subtasks, color, onChange }: SubtasksEditorProp
             className="tap-expand relative flex h-5 w-5 shrink-0 items-center justify-center rounded-md"
             style={{ border: "1.5px solid " + color, backgroundColor: st.done ? color : "transparent" }}
           >
-            {st.done && <Icon name="check" size={13} strokeWidth={2.6} className="text-white" />}
+            {st.done && <Icon name="check" size={13} strokeWidth={2.6} style={{ color: "var(--c-on-solid)" }} />}
           </button>
           <input
             value={st.title}

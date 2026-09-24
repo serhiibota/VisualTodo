@@ -38,7 +38,7 @@ function TaskPillImpl({ icon, swatch, height, fill, width = 46 }: TaskPillProps)
         style={{ height: fillPx, backgroundColor: swatch.solid }}
       >
         <div className="absolute" style={{ top: iconTop, left: iconLeft }}>
-          <TaskIcon name={icon} size={ICON} color="#FFFFFF" />
+          <TaskIcon name={icon} size={ICON} color="var(--c-on-solid)" />
         </div>
       </div>
     </div>
