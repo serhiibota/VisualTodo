@@ -43,7 +43,8 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
   const projects = usePlannerStore((s) => s.projects);
   const selectedDate = usePlannerStore((s) => s.selectedDate);
   const activeProjectId = usePlannerStore((s) => s.activeProjectId);
-  const { addTask, updateTask, removeTask, closeSheet } = usePlannerStore.getState();
+  const lists = usePlannerStore((s) => s.lists);
+  const { addTask, updateTask, removeTask, closeSheet, addList, openSheet } = usePlannerStore.getState();
 
   const taskId = sheet.taskId;
   const existing = taskId ? tasks[taskId] : undefined;
@@ -81,8 +82,8 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
   const canSave = draft.title.trim().length > 0;
   const swatch = PALETTE[draft.color] ?? PALETTE.mist;
 
-  const save = () => {
-    if (!canSave) return;
+  /** Сохранить черновик, не закрывая шторку (нужно перед переходом в прикреплённый список) */
+  const commit = () => {
     const clean: TaskDraft = {
       ...draft,
       title: draft.title.trim(),
@@ -91,7 +92,26 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
     };
     if (taskId) updateTask(taskId, clean);
     else addTask(clean);
+  };
+
+  const save = () => {
+    if (!canSave) return;
+    commit();
     closeSheet();
+  };
+
+  // ---------- Прикреплённый список ----------
+  const attached = draft.listId ? lists.find((l) => l.id === draft.listId) : undefined;
+  const createListForTask = () => {
+    const base = draft.title.trim() || "Блок";
+    const shopping = draft.icon === "cart";
+    const id = addList(shopping ? base : base + " — план", shopping ? "shopping" : "check");
+    patch({ listId: id });
+  };
+  const openAttached = () => {
+    if (!attached || !canSave) return;
+    commit();
+    openSheet({ kind: "list", listId: attached.id });
   };
 
   const remove = () => {
@@ -248,6 +268,51 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
 
       <Label>Длительность · {formatDuration(draft.duration)}</Label>
       <DurationPicker value={draft.duration} max={maxDuration} onChange={(duration) => patch({ duration })} />
+
+      <Label>Список</Label>
+      {attached ? (
+        <div className="flex items-center gap-2 rounded-2xl bg-hover py-1.5 pl-4 pr-1.5">
+          <Icon name={attached.kind === "shopping" ? "cart" : "listCheck"} size={18} className="shrink-0 text-graphite" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[15px] font-medium text-ink">{attached.title}</span>
+            <span className="block text-[12px] tabular-nums text-muted">
+              {attached.items.length
+                ? attached.items.filter((it) => it.done).length + " из " + attached.items.length
+                : "пока пусто"}
+            </span>
+          </span>
+          <button
+            type="button"
+            onClick={openAttached}
+            disabled={!canSave}
+            className="h-9 shrink-0 rounded-full bg-ink px-3.5 text-[13px] font-medium text-milk disabled:opacity-30"
+          >
+            Открыть
+          </button>
+          <button
+            type="button"
+            aria-label="Открепить список"
+            onClick={() => patch({ listId: null })}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted active:bg-line"
+          >
+            <Icon name="close" size={16} />
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-1.5">
+          {lists.map((l) => (
+            <Chip key={l.id} on={false} onClick={() => patch({ listId: l.id })}>
+              {l.title}
+            </Chip>
+          ))}
+          <Chip on={false} onClick={createListForTask}>
+            + Новый список для блока
+          </Chip>
+        </div>
+      )}
+      <p className="mt-1.5 text-[12px] leading-5 text-muted">
+        План встречи, продукты, что взять с собой — откроется с ленты тапом по «списку» у блока.
+      </p>
 
       <Label>Подзадачи</Label>
       <SubtasksEditor

@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { BottomSheet } from "@/components/sheet/BottomSheet";
+import { ListDetail } from "@/components/lists/ListDetail";
+import { ListsTab } from "@/components/lists/ListsTab";
 import { TaskPill } from "@/components/timeline/TaskPill";
 import { Icon } from "@/components/ui/Icon";
 import { COLOR_KEYS, PALETTE } from "@/lib/palette";
@@ -12,22 +14,69 @@ import { usePlannerStore } from "@/store/usePlannerStore";
 import type { Task } from "@/store/types";
 
 /**
- * «Входящие» — задачи без времени. Кнопка «+» ставит задачу в первое
- * свободное окно выбранного дня (сегодня — не раньше текущего момента).
+ * Хранилища вне дня: «Входящие» (задачи без времени) и «Списки».
+ * Одна кнопка в шапке — две вкладки: на 375px в шапке больше нет места.
  */
 export function InboxSheet() {
-  const open = usePlannerStore((s) => s.sheet?.kind === "inbox");
+  const sheet = usePlannerStore((s) => s.sheet);
+  const lists = usePlannerStore((s) => s.lists);
   const closeSheet = usePlannerStore((s) => s.closeSheet);
+  const open = sheet?.kind === "inbox" || sheet?.kind === "list";
+
+  const [tab, setTab] = useState<"inbox" | "lists">("inbox");
+  const [listId, setListId] = useState<string | null>(null);
+  // Синхронизация с тем, как открыли шторку: «Входящие», вкладка «Списки» или конкретный список
+  const [openedWith, setOpenedWith] = useState(sheet);
+  if (open && sheet !== openedWith) {
+    setOpenedWith(sheet);
+    if (sheet?.kind === "list") {
+      setTab("lists");
+      setListId(sheet.listId);
+    } else if (sheet?.kind === "inbox") {
+      setTab(sheet.tab ?? "inbox");
+      setListId(null);
+    }
+  }
+
+  const list = listId ? lists.find((l) => l.id === listId) : undefined;
+  const title = tab === "inbox" ? "Входящие" : list ? "Список" : "Списки";
 
   return (
-    <BottomSheet open={open} onClose={closeSheet} title="Входящие">
-      <InboxContent />
+    <BottomSheet open={open} onClose={closeSheet} title={title}>
+      {!list && (
+        <div className="mb-4 grid grid-cols-2 gap-1 rounded-2xl bg-hover p-1">
+          {(
+            [
+              ["inbox", "Входящие"],
+              ["lists", "Списки"],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={tab === key}
+              onClick={() => setTab(key)}
+              className={
+                "h-9 rounded-xl text-[14px] transition-colors duration-200 " +
+                (tab === key ? "bg-paper font-medium text-ink shadow-[0_1px_3px_rgb(var(--c-shade)/0.12)]" : "text-muted")
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+      {tab === "inbox" && <InboxContent />}
+      {tab === "lists" && !list && <ListsTab onOpen={setListId} />}
+      {tab === "lists" && list && <ListDetail list={list} onBack={() => setListId(null)} />}
     </BottomSheet>
   );
 }
 
 function InboxContent() {
   const tasks = usePlannerStore((s) => s.tasks);
+  const lists = usePlannerStore((s) => s.lists);
+  const listTitles = useMemo(() => Object.fromEntries(lists.map((l) => [l.id, l.title])), [lists]);
   const selectedDate = usePlannerStore((s) => s.selectedDate);
   const { addTask, scheduleTask, openSheet } = usePlannerStore.getState();
   const [title, setTitle] = useState("");
@@ -122,7 +171,10 @@ function InboxContent() {
               >
                 <TaskPill icon={task.icon} swatch={swatch} height={46} fill={task.done ? 1 : 0} />
                 <span className="min-w-0">
-                  <span className="block text-[12px] text-muted">{formatDuration(task.duration)}</span>
+                  <span className="block text-[12px] text-muted">
+                    {formatDuration(task.duration)}
+                    {task.listId && listTitles[task.listId] ? " · список «" + listTitles[task.listId] + "»" : ""}
+                  </span>
                   <span className={"block truncate text-[16px] font-semibold " + (task.done ? "text-faint line-through" : "text-ink")}>
                     {task.title}
                   </span>

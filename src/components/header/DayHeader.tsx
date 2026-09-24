@@ -76,7 +76,7 @@ export function DayHeader() {
           </button>
           <button
             type="button"
-            aria-label={"Входящие: " + inboxCount}
+            aria-label={"Входящие и списки: " + inboxCount}
             onClick={() => openSheet({ kind: "inbox" })}
             className="relative flex h-9 w-9 items-center justify-center rounded-full bg-hover text-graphite active:bg-line"
           >

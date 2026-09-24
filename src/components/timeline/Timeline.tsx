@@ -29,6 +29,7 @@ export function Timeline() {
   const toggleTask = usePlannerStore((s) => s.toggleTask);
   const updateTask = usePlannerStore((s) => s.updateTask);
   const sheetOpen = usePlannerStore((s) => s.sheet !== null);
+  const lists = usePlannerStore((s) => s.lists);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
   const isToday = selectedDate === todayKey();
@@ -60,6 +61,14 @@ export function Timeline() {
   }, [selectedDate]);
 
   const onOpen = useCallback((id: string) => openSheet({ kind: "task", taskId: id }), [openSheet]);
+  // «2/5» для прикреплённых списков — строка-примитив, чтобы не ломать memo строк
+  const listProgress = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const l of lists) map[l.id] = l.items.filter((it) => it.done).length + "/" + l.items.length;
+    return map;
+  }, [lists]);
+  const onOpenList = useCallback((listId: string) => openSheet({ kind: "list", listId }), [openSheet]);
+
   const onMove = useCallback((id: string, start: number) => updateTask(id, { start }), [updateTask]);
   const onAdd = useCallback(
     (start: number) => openSheet({ kind: "task", taskId: null, start }),
@@ -187,6 +196,8 @@ export function Timeline() {
                 onOpen={onOpen}
                 onToggle={toggleTask}
                 onMove={onMove}
+              listProgress={task.listId ? listProgress[task.listId] ?? null : null}
+              onOpenList={onOpenList}
               />
             );
           })}

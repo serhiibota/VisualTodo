@@ -25,6 +25,9 @@ interface TaskRowProps {
   onOpen: (id: string) => void;
   onToggle: (id: string) => void;
   onMove: (id: string, start: number) => void;
+  /** Прогресс прикреплённого списка «2/5» (null — списка нет) */
+  listProgress: string | null;
+  onOpenList: (listId: string) => void;
 }
 
 const SWIPE_START = 10;
@@ -53,6 +56,8 @@ function TaskRowImpl({
   onOpen,
   onToggle,
   onMove,
+  listProgress,
+  onOpenList,
 }: TaskRowProps) {
   const base = PALETTE[task.color] ?? PALETTE.mist;
   const height = pillHeight(task.duration);
@@ -271,7 +276,26 @@ function TaskRowImpl({
   };
 
   const subDone = task.subtasks.filter((st) => st.done).length;
-  const hasMeta = task.subtasks.length > 0 || task.links.length > 0 || !!projectName || overlaps;
+  const hasList = !!task.listId && listProgress !== null;
+  const hasMeta = task.subtasks.length > 0 || task.links.length > 0 || !!projectName || overlaps || hasList;
+  const showMeta = hasMeta && (tall || height >= 70);
+
+  // Отдельная кнопка внутри строки: тап открывает список, а не редактор блока
+  const listChip = hasList ? (
+    <button
+      type="button"
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        onOpenList(task.listId as string);
+      }}
+      aria-label={"Открыть список, отмечено " + listProgress}
+      className="tap-expand relative inline-flex shrink-0 items-center gap-1 rounded-full bg-hover px-1.5 py-px text-[12px] tabular-nums text-graphite"
+    >
+      <Icon name="listCheck" size={12} />
+      {listProgress}
+    </button>
+  ) : null;
 
   return (
     <div
@@ -328,12 +352,15 @@ function TaskRowImpl({
           </div>
 
           <div className={"flex min-w-0 flex-1 flex-col pr-1 " + (tall ? "justify-start pt-2.5" : "justify-center")}>
-            <div className="truncate text-[12px] leading-4 tabular-nums text-muted">
+            <div className="flex min-w-0 items-center gap-1.5 text-[12px] leading-4 tabular-nums text-muted">
+              <span className="min-w-0 truncate">
               {formatClock(task.start)}–{formatClock(Math.min(end, 1440))}
               <span className="text-faint"> · {formatDuration(task.duration)}</span>
               {active && (
                 <span style={{ color: swatch.ink }}> · ещё {formatDuration(Math.max(1, Math.round(task.duration * (1 - (progress ?? 0)))))}</span>
               )}
+              </span>
+              {!showMeta && listChip}
             </div>
             <div
               className={
@@ -344,8 +371,9 @@ function TaskRowImpl({
             >
               {task.title}
             </div>
-            {hasMeta && (tall || height >= 70) && (
+            {showMeta && (
               <div className="mt-1 flex min-w-0 items-center gap-2 overflow-hidden text-[12px] text-muted">
+                {listChip}
                 {task.subtasks.length > 0 && (
                   <span className="flex shrink-0 items-center gap-1 tabular-nums">
                     <Icon name="check" size={12} strokeWidth={2.2} />

@@ -38,6 +38,26 @@ export interface Task {
   tagIds: string[];
   projectId: string | null;
   done: boolean;
+  /** Прикреплённый список (например, «Продукты» к блоку «Купить продукты») */
+  listId?: string | null;
+}
+
+export interface ListItem {
+  id: string;
+  title: string;
+  done: boolean;
+}
+
+/**
+ * Список живёт дольше одного дня: продукты, «взять в поездку».
+ * shopping — режим покупок: отмеченное уезжает вниз и очищается одной кнопкой,
+ * чтобы список можно было переиспользовать.
+ */
+export interface TaskList {
+  id: string;
+  title: string;
+  kind: "check" | "shopping";
+  items: ListItem[];
 }
 
 export interface Tag {
@@ -63,6 +83,7 @@ export interface DayBounds {
 export type SheetState =
   | { kind: "task"; taskId: string | null; start?: number; duration?: number; inbox?: boolean }
   | { kind: "projects" }
-  | { kind: "inbox" }
+  | { kind: "inbox"; tab?: "inbox" | "lists" }
+  | { kind: "list"; listId: string }
   | { kind: "settings" }
   | null;

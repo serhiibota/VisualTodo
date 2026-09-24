@@ -8,7 +8,7 @@ import { uid } from "@/lib/id";
 import { guessIcon } from "@/lib/taskIcons";
 import { todayKey } from "@/lib/time";
 import { createSeed } from "./seed";
-import type { ColorKey, DayBounds, Project, SheetState, Tag, Task, TaskDraft } from "./types";
+import type { ColorKey, DayBounds, ListItem, Project, SheetState, Tag, Task, TaskDraft, TaskList } from "./types";
 
 interface PersistedState {
   tasks: Record<string, Task>;
@@ -17,6 +17,7 @@ interface PersistedState {
   seeded: boolean;
   appearance: AppearanceSettings;
   dayBounds: DayBounds;
+  lists: TaskList[];
 }
 
 interface UiState {
@@ -53,6 +54,16 @@ interface Actions {
   setAppearance: (patch: Partial<AppearanceSettings>) => void;
   setDayBounds: (bounds: DayBounds) => void;
 
+  addList: (title: string, kind: TaskList["kind"]) => string;
+  updateList: (id: string, patch: Partial<Omit<TaskList, "id" | "items">>) => void;
+  removeList: (id: string) => void;
+  addListItem: (listId: string, title: string) => void;
+  updateListItem: (listId: string, itemId: string, patch: Partial<Omit<ListItem, "id">>) => void;
+  removeListItem: (listId: string, itemId: string) => void;
+  clearDoneItems: (listId: string) => void;
+  /** Пункт списка → задача во «Входящих» (пункт из списка убирается) */
+  listItemToInbox: (listId: string, itemId: string) => void;
+
   seedIfEmpty: () => void;
 }
 
@@ -77,6 +88,7 @@ export const usePlannerStore = create<PlannerState>()(
       seeded: false,
       appearance: DEFAULT_APPEARANCE,
       dayBounds: DEFAULT_DAY_BOUNDS,
+      lists: [],
 
       // Дата выставляется на клиенте после гидратации (у сервера другой часовой пояс).
       selectedDate: "",
@@ -151,6 +163,66 @@ export const usePlannerStore = create<PlannerState>()(
       setAppearance: (patch) => set((s) => ({ appearance: { ...s.appearance, ...patch } })),
       setDayBounds: (dayBounds) => set({ dayBounds }),
 
+      addList: (title, kind) => {
+        const id = uid();
+        set((s) => ({ lists: [...s.lists, { id, title, kind, items: [] }] }));
+        return id;
+      },
+      updateList: (id, patch) =>
+        set((s) => ({ lists: s.lists.map((l) => (l.id === id ? { ...l, ...patch } : l)) })),
+      removeList: (id) =>
+        set((s) => {
+          // Задачи со ссылкой на удалённый список просто отвязываем
+          const tasks: Record<string, Task> = {};
+          for (const key in s.tasks) {
+            const t = s.tasks[key];
+            tasks[key] = t.listId === id ? { ...t, listId: null } : t;
+          }
+          return { tasks, lists: s.lists.filter((l) => l.id !== id) };
+        }),
+      addListItem: (listId, title) =>
+        set((s) => ({
+          lists: s.lists.map((l) =>
+            l.id === listId ? { ...l, items: [...l.items, { id: uid(), title, done: false }] } : l
+          ),
+        })),
+      updateListItem: (listId, itemId, patch) =>
+        set((s) => ({
+          lists: s.lists.map((l) =>
+            l.id === listId
+              ? { ...l, items: l.items.map((it) => (it.id === itemId ? { ...it, ...patch } : it)) }
+              : l
+          ),
+        })),
+      removeListItem: (listId, itemId) =>
+        set((s) => ({
+          lists: s.lists.map((l) => (l.id === listId ? { ...l, items: l.items.filter((it) => it.id !== itemId) } : l)),
+        })),
+      clearDoneItems: (listId) =>
+        set((s) => ({
+          lists: s.lists.map((l) => (l.id === listId ? { ...l, items: l.items.filter((it) => !it.done) } : l)),
+        })),
+      listItemToInbox: (listId, itemId) => {
+        const list = get().lists.find((l) => l.id === listId);
+        const item = list?.items.find((it) => it.id === itemId);
+        if (!list || !item) return;
+        get().addTask({
+          title: item.title,
+          date: null,
+          start: 0,
+          duration: 30,
+          icon: guessIcon(item.title),
+          color: "mist",
+          description: "",
+          subtasks: [],
+          links: [],
+          tagIds: [],
+          projectId: null,
+          done: false,
+        });
+        get().removeListItem(listId, itemId);
+      },
+
       seedIfEmpty: () => {
         const s = get();
         const today = todayKey();
@@ -173,6 +245,7 @@ export const usePlannerStore = create<PlannerState>()(
         seeded: s.seeded,
         appearance: s.appearance,
         dayBounds: s.dayBounds,
+        lists: s.lists,
       }),
       // v1 → v2: у задач появились иконка, собственный цвет и подзадачи.
       migrate: (persisted, version) => {
@@ -202,6 +275,7 @@ export const usePlannerStore = create<PlannerState>()(
           ...p,
           appearance: { ...DEFAULT_APPEARANCE, ...p.appearance },
           dayBounds: p.dayBounds ?? DEFAULT_DAY_BOUNDS,
+          lists: p.lists ?? [],
         };
       },
       // Гидратация вручную на клиенте — без рассинхронизации SSR/CSR.
