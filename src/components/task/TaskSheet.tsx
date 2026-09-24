@@ -7,6 +7,7 @@ import { TaskPill } from "@/components/timeline/TaskPill";
 import { TaskIcon } from "@/components/ui/TaskIcon";
 import { DAY_END, DEFAULT_START, pillHeight } from "@/lib/constants";
 import { COLOR_KEYS, PALETTE } from "@/lib/palette";
+import { NewListForm } from "@/components/lists/NewListForm";
 import { LIST_KIND, listSummary } from "@/lib/lists";
 import { guessIcon, TASK_ICON_KEYS } from "@/lib/taskIcons";
 import { formatClock, formatDuration, parseClock } from "@/lib/time";
@@ -103,15 +104,8 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
 
   // ---------- Прикреплённый список ----------
   const attached = draft.listId ? lists.find((l) => l.id === draft.listId) : undefined;
-  const createForTask = (kind: "list" | "note") => {
-    const base = draft.title.trim() || "Блок";
-    const shopping = draft.icon === "cart";
-    const id =
-      kind === "note"
-        ? addList(base + " — заметка", "note")
-        : addList(shopping ? base : base + " — план", shopping ? "shopping" : "check");
-    patch({ listId: id });
-  };
+  // Новый список для блока: название и тип задаёт человек (форма), здесь только создаём и прикрепляем
+  const [creatingList, setCreatingList] = useState(false);
   const openAttached = () => {
     if (!attached || !canSave) return;
     commit();
@@ -301,19 +295,27 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
           </button>
         </div>
       ) : (
-        <div className="flex flex-wrap gap-1.5">
-          {lists.map((l) => (
-            <Chip key={l.id} on={false} onClick={() => patch({ listId: l.id })}>
-              {l.title}
+        creatingList ? (
+          <NewListForm
+            placeholder="Например: «План встречи»"
+            onCancel={() => setCreatingList(false)}
+            onCreate={(t, kind) => {
+              patch({ listId: addList(t, kind) });
+              setCreatingList(false);
+            }}
+          />
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            {lists.map((l) => (
+              <Chip key={l.id} on={false} onClick={() => patch({ listId: l.id })}>
+                {l.title}
+              </Chip>
+            ))}
+            <Chip on={false} onClick={() => setCreatingList(true)}>
+              + Новый
             </Chip>
-          ))}
-          <Chip on={false} onClick={() => createForTask("list")}>
-            + Список для блока
-          </Chip>
-          <Chip on={false} onClick={() => createForTask("note")}>
-            + Заметка
-          </Chip>
-        </div>
+          </div>
+        )
       )}
       <p className="mt-1.5 text-[12px] leading-5 text-muted">
         План встречи, продукты, протокол — откроется с ленты тапом по значку у блока.
