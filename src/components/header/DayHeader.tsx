@@ -97,7 +97,7 @@ export function DayHeader() {
           </button>
           <button
             type="button"
-            aria-label="Оформление"
+            aria-label="Настройки"
             onClick={() => openSheet({ kind: "settings" })}
             className="flex h-9 w-9 items-center justify-center rounded-full bg-hover text-graphite active:bg-line"
           >

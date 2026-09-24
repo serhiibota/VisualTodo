@@ -3,12 +3,12 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { DEFAULT_APPEARANCE, type AppearanceSettings } from "@/lib/appearance";
-import { STORAGE_KEY } from "@/lib/constants";
+import { DEFAULT_DAY_BOUNDS, STORAGE_KEY } from "@/lib/constants";
 import { uid } from "@/lib/id";
 import { guessIcon } from "@/lib/taskIcons";
 import { todayKey } from "@/lib/time";
 import { createSeed } from "./seed";
-import type { ColorKey, Project, SheetState, Tag, Task, TaskDraft } from "./types";
+import type { ColorKey, DayBounds, Project, SheetState, Tag, Task, TaskDraft } from "./types";
 
 interface PersistedState {
   tasks: Record<string, Task>;
@@ -16,6 +16,7 @@ interface PersistedState {
   projects: Project[];
   seeded: boolean;
   appearance: AppearanceSettings;
+  dayBounds: DayBounds;
 }
 
 interface UiState {
@@ -50,6 +51,7 @@ interface Actions {
   removeTag: (id: string) => void;
 
   setAppearance: (patch: Partial<AppearanceSettings>) => void;
+  setDayBounds: (bounds: DayBounds) => void;
 
   seedIfEmpty: () => void;
 }
@@ -74,6 +76,7 @@ export const usePlannerStore = create<PlannerState>()(
       projects: [],
       seeded: false,
       appearance: DEFAULT_APPEARANCE,
+      dayBounds: DEFAULT_DAY_BOUNDS,
 
       // Дата выставляется на клиенте после гидратации (у сервера другой часовой пояс).
       selectedDate: "",
@@ -146,6 +149,7 @@ export const usePlannerStore = create<PlannerState>()(
         }),
 
       setAppearance: (patch) => set((s) => ({ appearance: { ...s.appearance, ...patch } })),
+      setDayBounds: (dayBounds) => set({ dayBounds }),
 
       seedIfEmpty: () => {
         const s = get();
@@ -168,6 +172,7 @@ export const usePlannerStore = create<PlannerState>()(
         projects: s.projects,
         seeded: s.seeded,
         appearance: s.appearance,
+        dayBounds: s.dayBounds,
       }),
       // v1 → v2: у задач появились иконка, собственный цвет и подзадачи.
       migrate: (persisted, version) => {
@@ -192,7 +197,12 @@ export const usePlannerStore = create<PlannerState>()(
       // Сохранения без appearance (до появления настроек) получают значения по умолчанию
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<PersistedState>;
-        return { ...current, ...p, appearance: { ...DEFAULT_APPEARANCE, ...p.appearance } };
+        return {
+          ...current,
+          ...p,
+          appearance: { ...DEFAULT_APPEARANCE, ...p.appearance },
+          dayBounds: p.dayBounds ?? DEFAULT_DAY_BOUNDS,
+        };
       },
       // Гидратация вручную на клиенте — без рассинхронизации SSR/CSR.
       skipHydration: true,

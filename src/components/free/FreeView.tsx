@@ -2,7 +2,7 @@
 
 import { useMemo, useRef } from "react";
 import { Icon } from "@/components/ui/Icon";
-import { FREE_FROM, FREE_TO, MIN_FREE, SNAP_MIN } from "@/lib/constants";
+import { MIN_FREE, SNAP_MIN } from "@/lib/constants";
 import { freeWindows, type FreeWindow } from "@/lib/flow";
 import { animateScrollTop } from "@/lib/scroll";
 import { formatClock, formatDuration, pluralRu, todayKey } from "@/lib/time";
@@ -10,8 +10,13 @@ import { useNowMinutes } from "@/hooks/useNow";
 import { usePlannerStore } from "@/store/usePlannerStore";
 import type { Task } from "@/store/types";
 
-const SPAN = FREE_TO - FREE_FROM;
-const pct = (m: number) => ((m - FREE_FROM) / SPAN) * 100 + "%";
+/** 5 подписей по полосе, округлённых до часа */
+function ticks(from: number, to: number): number[] {
+  const out = [from];
+  for (let i = 1; i < 4; i++) out.push(Math.round((from + ((to - from) * i) / 4) / 60) * 60);
+  out.push(to);
+  return out.filter((m, i, a) => a.indexOf(m) === i);
+}
 
 /**
  * Режим «Свободное время»: всё лишнее убрано, видно только сколько
@@ -21,6 +26,9 @@ export function FreeView() {
   const selectedDate = usePlannerStore((s) => s.selectedDate);
   const tasksMap = usePlannerStore((s) => s.tasks);
   const openSheet = usePlannerStore((s) => s.openSheet);
+  // Границы «моего дня» — из настроек
+  const { from: FREE_FROM, to: FREE_TO } = usePlannerStore((s) => s.dayBounds);
+  const pct = (m: number) => ((m - FREE_FROM) / (FREE_TO - FREE_FROM)) * 100 + "%";
   const nowRaw = useNowMinutes();
   const scrollerRef = useRef<HTMLDivElement>(null);
 
@@ -38,7 +46,7 @@ export function FreeView() {
   const from = isToday ? Math.max(FREE_FROM, Math.ceil(nowRaw / SNAP_MIN) * SNAP_MIN) : FREE_FROM;
   const windows = useMemo(
     () => (from >= FREE_TO ? [] : freeWindows(dayTasks, from, FREE_TO, MIN_FREE)),
-    [dayTasks, from]
+    [dayTasks, from, FREE_TO]
   );
   const total = windows.reduce((sum, w) => sum + (w.end - w.start), 0);
   const longest = windows.reduce((m, w) => Math.max(m, w.end - w.start), 0);
@@ -48,7 +56,7 @@ export function FreeView() {
       dayTasks
         .map((t) => ({ start: Math.max(FREE_FROM, t.start), end: Math.min(FREE_TO, t.start + t.duration), id: t.id }))
         .filter((b) => b.end > b.start),
-    [dayTasks]
+    [dayTasks, FREE_FROM, FREE_TO]
   );
 
   const add = (start: number, duration: number) => openSheet({ kind: "task", taskId: null, start, duration });
@@ -79,10 +87,15 @@ export function FreeView() {
   return (
     <div ref={scrollerRef} className="scroll-touch relative min-h-0 flex-1 overflow-y-auto">
       <div className="px-4 pb-[120px] pt-5">
-        <p className="text-[13px] text-muted">
+        <button
+          type="button"
+          onClick={() => openSheet({ kind: "settings" })}
+          className="text-left text-[13px] text-muted"
+        >
           Свободно {isToday ? "сегодня с " + formatClock(Math.min(from, FREE_TO)) : "с " + formatClock(FREE_FROM)} до{" "}
           {formatClock(FREE_TO)}
-        </p>
+          <span className="text-faint"> · изменить</span>
+        </button>
         <div className="font-display text-[calc(46px*var(--display-scale,1))] font-medium leading-[1.1] tracking-[-0.01em] text-ink">
           {total ? formatDuration(total) : "0 мин"}
         </div>
@@ -118,7 +131,7 @@ export function FreeView() {
             )}
           </div>
           <div className="relative mt-1.5 h-4 text-[11px] tabular-nums text-faint">
-            {[FREE_FROM, FREE_FROM + 240, FREE_FROM + 480, FREE_FROM + 720, FREE_TO].map((m, i, arr) => (
+            {ticks(FREE_FROM, FREE_TO).map((m, i, arr) => (
               <span
                 key={m}
                 className="absolute"

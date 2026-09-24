@@ -27,9 +27,17 @@ export const DEFAULT_START = 9 * 60;
 
 export const DAY_END = 24 * 60;
 
-/** Окно дня, в котором считаем свободное время (сон и глубокая ночь не в счёт) */
-export const FREE_FROM = 7 * 60;
-export const FREE_TO = 23 * 60;
+/** Границы дня по умолчанию: в них считаем свободное время и ищем окна (меняются в настройках) */
+export const DEFAULT_DAY_BOUNDS = { from: 7 * 60, to: 23 * 60 };
+/** Быстрые варианты в настройках */
+export const DAY_BOUNDS_PRESETS = [
+  { from: 7 * 60, to: 23 * 60 },
+  { from: 8 * 60, to: 22 * 60 },
+  { from: 9 * 60, to: 18 * 60 },
+  { from: 6 * 60, to: 24 * 60 },
+];
+/** День короче этого не разрешаем — иначе «свободное время» теряет смысл */
+export const MIN_DAY_LENGTH = 60;
 /** Окна короче этого в режиме «Свободное время» не показываем */
 export const MIN_FREE = 15;
 

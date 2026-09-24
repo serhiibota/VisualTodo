@@ -12,7 +12,7 @@ import { useAppHeight } from "@/hooks/useAppHeight";
 import { useApplyAppearance } from "@/hooks/useApplyAppearance";
 import { useHydrated } from "@/hooks/useHydrated";
 import { minutesNow, todayKey } from "@/lib/time";
-import { DAY_END, DEFAULT_START, SNAP_MIN } from "@/lib/constants";
+import { DAY_END, SNAP_MIN } from "@/lib/constants";
 import { findFreeSlot } from "@/lib/flow";
 import { usePlannerStore } from "@/store/usePlannerStore";
 
@@ -56,10 +56,11 @@ function AddButton() {
   const selectedDate = usePlannerStore((s) => s.selectedDate);
 
   const onClick = () => {
-    // Первое свободное окно: сегодня — от текущего момента, иначе — с 09:00
     const { tasks } = usePlannerStore.getState();
     const day = Object.values(tasks).filter((t) => t.date === selectedDate);
-    const from = selectedDate === todayKey() ? Math.max(minutesNow(), 6 * 60) : DEFAULT_START;
+    // Первое свободное окно в границах «моего дня»: сегодня — от текущего момента
+    const { from: dayFrom } = usePlannerStore.getState().dayBounds;
+    const from = selectedDate === todayKey() ? Math.max(minutesNow(), dayFrom) : dayFrom;
     const start = Math.min(DAY_END - SNAP_MIN, findFreeSlot(day, 30, from));
     openSheet({ kind: "task", taskId: null, start });
   };

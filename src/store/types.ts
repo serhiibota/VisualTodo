@@ -54,6 +54,12 @@ export interface Project {
 
 export type TaskDraft = Omit<Task, "id">;
 
+/** Границы «моего дня» в минутах от полуночи; to может быть 1440 (полночь) */
+export interface DayBounds {
+  from: number;
+  to: number;
+}
+
 export type SheetState =
   | { kind: "task"; taskId: string | null; start?: number; duration?: number; inbox?: boolean }
   | { kind: "projects" }

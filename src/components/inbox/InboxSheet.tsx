@@ -5,7 +5,6 @@ import { BottomSheet } from "@/components/sheet/BottomSheet";
 import { TaskPill } from "@/components/timeline/TaskPill";
 import { Icon } from "@/components/ui/Icon";
 import { COLOR_KEYS, PALETTE } from "@/lib/palette";
-import { DEFAULT_START } from "@/lib/constants";
 import { findFreeSlot } from "@/lib/flow";
 import { guessIcon } from "@/lib/taskIcons";
 import { formatClock, formatDayMonth, formatDuration, minutesNow, todayKey } from "@/lib/time";
@@ -67,7 +66,8 @@ function InboxContent() {
   };
 
   const place = (task: Task) => {
-    const from = selectedDate === todayKey() ? Math.max(minutesNow(), 6 * 60) : DEFAULT_START;
+    const { from: dayFrom } = usePlannerStore.getState().dayBounds;
+    const from = selectedDate === todayKey() ? Math.max(minutesNow(), dayFrom) : dayFrom;
     const start = findFreeSlot(day, task.duration, from);
     scheduleTask(task.id, selectedDate, start);
     setLastPlaced(task.title + " → " + formatClock(start));

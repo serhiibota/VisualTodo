@@ -3,6 +3,9 @@
 import { BottomSheet } from "@/components/sheet/BottomSheet";
 import { Icon } from "@/components/ui/Icon";
 import { DISPLAY_FONTS, UI_FONTS } from "@/lib/appearance";
+import { DAY_BOUNDS_PRESETS, MIN_DAY_LENGTH } from "@/lib/constants";
+import { formatClock, formatDuration } from "@/lib/time";
+import type { DayBounds } from "@/store/types";
 import { AUTO_DARK, AUTO_LIGHT, THEME_OPTIONS, THEMES, type ThemeDef, type ThemeKey } from "@/lib/themes";
 import { usePlannerStore } from "@/store/usePlannerStore";
 
@@ -11,7 +14,7 @@ export function SettingsSheet() {
   const closeSheet = usePlannerStore((s) => s.closeSheet);
 
   return (
-    <BottomSheet open={open} onClose={closeSheet} title="Оформление">
+    <BottomSheet open={open} onClose={closeSheet} title="Настройки">
       <SettingsContent />
     </BottomSheet>
   );
@@ -27,6 +30,9 @@ function SettingsContent() {
 
   return (
     <div className="pb-2">
+      <SectionTitle>Мой день</SectionTitle>
+      <DayBoundsEditor />
+
       <SectionTitle>Тушь</SectionTitle>
       <ThemeGrid group="ink" current={appearance.theme} onSelect={(theme) => setAppearance({ theme })} />
       <p className="mt-2 text-[12px] leading-5 text-muted">
@@ -94,6 +100,109 @@ function SettingsContent() {
       <p className="mt-4 text-[12px] leading-5 text-muted">
         Шрифты, кроме системного, скачиваются один раз при выборе и дальше берутся из кэша.
       </p>
+    </div>
+  );
+}
+
+const presetLabel = (b: DayBounds) => String(b.from / 60).padStart(2, "0") + "–" + String(b.to / 60).padStart(2, "0");
+const STEP = 30;
+
+/**
+ * Границы «моего дня»: в них режим «Свободное время» считает окна,
+ * а «Входящие» и «+» ищут первое свободное место. Свои переключатели
+ * вместо <input type="time">: не зависят от 12/24-часового формата
+ * телефона и не вылезают за 375px.
+ */
+function DayBoundsEditor() {
+  const bounds = usePlannerStore((s) => s.dayBounds);
+  const setDayBounds = usePlannerStore((s) => s.setDayBounds);
+
+  // Концы не могут сойтись ближе чем на MIN_DAY_LENGTH — сдвигаем, а не запрещаем
+  const setFrom = (from: number) =>
+    setDayBounds({ from, to: Math.max(bounds.to, from + MIN_DAY_LENGTH) });
+  const setTo = (to: number) =>
+    setDayBounds({ from: Math.min(bounds.from, to - MIN_DAY_LENGTH), to });
+
+  return (
+    <div>
+      <div className="flex gap-2">
+        <TimeStepper
+          label="Начало"
+          value={bounds.from}
+          min={0}
+          max={1440 - MIN_DAY_LENGTH}
+          onChange={setFrom}
+        />
+        <TimeStepper label="Конец" value={bounds.to} min={MIN_DAY_LENGTH} max={1440} onChange={setTo} />
+      </div>
+
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {DAY_BOUNDS_PRESETS.map((p) => {
+          const on = bounds.from === p.from && bounds.to === p.to;
+          return (
+            <button
+              key={p.from + "-" + p.to}
+              type="button"
+              aria-pressed={on}
+              onClick={() => setDayBounds(p)}
+              className={
+                "h-9 rounded-full px-3.5 text-[14px] tabular-nums transition-colors duration-200 " +
+                (on ? "bg-ink text-milk" : "bg-hover text-graphite")
+              }
+            >
+              {presetLabel(p)}
+            </button>
+          );
+        })}
+      </div>
+
+      <p className="mt-2 text-[12px] leading-5 text-muted">
+        День — {formatDuration(bounds.to - bounds.from)}. В этих границах считается свободное время, и сюда
+        «Входящие» и «+» ставят новые блоки.
+      </p>
+    </div>
+  );
+}
+
+function TimeStepper({
+  label,
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (m: number) => void;
+}) {
+  const btn =
+    "tap-expand relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-paper text-graphite disabled:opacity-30";
+  return (
+    <div className="flex min-w-0 flex-1 items-center justify-between rounded-2xl bg-hover px-2 py-1.5">
+      <button
+        type="button"
+        aria-label={label + ": раньше на 30 минут"}
+        disabled={value <= min}
+        onClick={() => onChange(Math.max(min, value - STEP))}
+        className={btn}
+      >
+        <Icon name="minus" size={14} strokeWidth={2} />
+      </button>
+      <div className="min-w-0 text-center leading-tight">
+        <div className="text-[11px] text-muted">{label}</div>
+        <div className="text-[17px] font-semibold tabular-nums text-ink">{formatClock(value)}</div>
+      </div>
+      <button
+        type="button"
+        aria-label={label + ": позже на 30 минут"}
+        disabled={value >= max}
+        onClick={() => onChange(Math.min(max, value + STEP))}
+        className={btn}
+      >
+        <Icon name="plus" size={14} strokeWidth={2} />
+      </button>
     </div>
   );
 }
