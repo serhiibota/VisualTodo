@@ -9,13 +9,20 @@ interface NewListFormProps {
   onCreate: (title: string, kind: TaskList["kind"]) => void;
   onCancel?: () => void;
   placeholder?: string;
+  /** Какие типы предлагать (в блоке — только списки: для текста у блока есть своё поле «Заметки») */
+  kinds?: TaskList["kind"][];
 }
 
 /**
  * Создание списка или заметки: название и тип выбирает человек.
  * Ничего не угадываем и не создаём, пока не нажат тип; «Ввод» ничего не создаёт.
  */
-export function NewListForm({ onCreate, onCancel, placeholder = "Название" }: NewListFormProps) {
+export function NewListForm({
+  onCreate,
+  onCancel,
+  placeholder = "Название",
+  kinds = ["check", "shopping", "note"],
+}: NewListFormProps) {
   const [title, setTitle] = useState("");
   const ready = title.trim().length > 0;
 
@@ -30,7 +37,7 @@ export function NewListForm({ onCreate, onCancel, placeholder = "Названи�
         className="h-12 w-full bg-transparent px-4 text-[16px] text-ink placeholder:text-faint"
       />
       <div className="flex gap-1.5 border-t border-line px-2 py-2">
-        {(["check", "shopping", "note"] as const).map((k) => (
+        {kinds.map((k) => (
           <button
             key={k}
             type="button"

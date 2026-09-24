@@ -267,7 +267,7 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
       <Label>Длительность · {formatDuration(draft.duration)}</Label>
       <DurationPicker value={draft.duration} max={maxDuration} onChange={(duration) => patch({ duration })} />
 
-      <Label>Список или заметка</Label>
+      <Label>Прикрепить список</Label>
       {attached ? (
         <div className="flex items-center gap-2 rounded-2xl bg-hover py-1.5 pl-4 pr-1.5">
           <Icon name={LIST_KIND[attached.kind].icon} size={18} className="shrink-0 text-graphite" />
@@ -298,6 +298,7 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
         creatingList ? (
           <NewListForm
             placeholder="Например: «План встречи»"
+            kinds={["check", "shopping"]}
             onCancel={() => setCreatingList(false)}
             onCreate={(t, kind) => {
               patch({ listId: addList(t, kind) });
@@ -318,7 +319,7 @@ function TaskForm({ sheet }: { sheet: TaskSheetState }) {
         )
       )}
       <p className="mt-1.5 text-[12px] leading-5 text-muted">
-        План встречи, продукты, протокол — откроется с ленты тапом по значку у блока.
+        Откроется с ленты тапом по значку у блока. Мысли по самому блоку — в «Заметки» ниже.
       </p>
 
       <Label>Подзадачи</Label>
