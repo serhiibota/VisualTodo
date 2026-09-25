@@ -6,9 +6,12 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "Структура",
     start_url: "/",
     display: "standalone",
-    background_color: "#F7F5F0",
+    background_color: "#161615",
     theme_color: "#F7F5F0",
     lang: "ru",
-    icons: [{ src: "/apple-icon", sizes: "180x180", type: "image/png" }],
+    icons: [
+      { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { src: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
   };
 }
