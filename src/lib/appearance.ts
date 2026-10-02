@@ -9,13 +9,25 @@ export interface AppearanceSettings {
   displayFont: DisplayFontKey;
   /** Строка фильтра проектов под неделей. По умолчанию скрыта — не спорит с выбором дня */
   showProjectBar: boolean;
+  /** Иконка «На экран „Домой“»: iOS берёт её в момент добавления */
+  appIcon: AppIconKey;
 }
+
+export type AppIconKey = "dark" | "light";
+
+export const APP_ICONS: { key: AppIconKey; label: string }[] = [
+  { key: "dark", label: "Тёмная" },
+  { key: "light", label: "Светлая" },
+];
+
+export const appIconHref = (key: AppIconKey, size: 180 | 192 | 512 = 180) => "/icons/day-" + key + "-" + size + ".png";
 
 export const DEFAULT_APPEARANCE: AppearanceSettings = {
   theme: "auto", // «Тушь с пометками» днём, «Суми» ночью
   uiFont: "system",
   displayFont: "cormorant",
   showProjectBar: false,
+  appIcon: "dark",
 };
 
 const SYSTEM_STACK = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
