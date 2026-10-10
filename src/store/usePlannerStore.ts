@@ -270,10 +270,12 @@ export const usePlannerStore = create<PlannerState>()(
       // Сохранения без appearance (до появления настроек) получают значения по умолчанию
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<PersistedState>;
+        // Старое поле выбора иконки (appIcon) тихо отбрасываем
+        const { appIcon: _legacyIcon, ...savedAppearance } = (p.appearance ?? {}) as Partial<AppearanceSettings> & { appIcon?: unknown };
         return {
           ...current,
           ...p,
-          appearance: { ...DEFAULT_APPEARANCE, ...p.appearance },
+          appearance: { ...DEFAULT_APPEARANCE, ...savedAppearance },
           dayBounds: p.dayBounds ?? DEFAULT_DAY_BOUNDS,
           lists: p.lists ?? [],
         };

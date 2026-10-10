@@ -87,7 +87,8 @@ src/
 │  ├─ page.tsx
 │  ├─ globals.css         каркас высоты, safe-area, анимации шторки/карточек
 │  ├─ manifest.ts
-│  └─ apple-icon.tsx
+│  ├─ icon.svg / icon.png  favicon
+│  └─ (apple-touch-icon и PWA-иконки — public/icons/app-*.png)
 ├─ components/
 │  ├─ Planner.tsx         корень: гидратация, FAB, шторки
 │  ├─ header/             DayHeader, WeekStrip, ProjectFilter
