@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { appIconHref } from "@/lib/appearance";
 import { resolveTheme, THEMES } from "@/lib/themes";
 import { usePlannerStore } from "@/store/usePlannerStore";
 
@@ -11,11 +10,7 @@ import { usePlannerStore } from "@/store/usePlannerStore";
  * inline-скрипт в layout ещё до отрисовки — без вспышки светлой темы.
  */
 export function useApplyAppearance() {
-  const { theme, uiFont, displayFont, appIcon } = usePlannerStore((s) => s.appearance);
-
-  useEffect(() => {
-    document.getElementById("apple-icon")?.setAttribute("href", appIconHref(appIcon));
-  }, [appIcon]);
+  const { theme, uiFont, displayFont } = usePlannerStore((s) => s.appearance);
 
   useEffect(() => {
     const root = document.documentElement;

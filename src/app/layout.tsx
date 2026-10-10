@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { appIconHref, buildFontCss } from "@/lib/appearance";
+import { APP_ICON_HREF, buildFontCss } from "@/lib/appearance";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { STORAGE_KEY } from "@/lib/constants";
 import { fontVariables } from "@/lib/fonts";
@@ -41,8 +41,6 @@ const bootScript =
   "var b=" + JSON.stringify(bgs) + ";" +
   "if(t==='auto')t=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'" + AUTO_DARK + "':'" + AUTO_LIGHT + "';" +
   "var m=document.querySelector('meta[name=\"theme-color\"]');if(m&&b[t])m.setAttribute('content',b[t]);" +
-  // Выбранная иконка — до того, как Safari её прочитает для «На экран «Домой»»
-  "if(a.appIcon==='light'){var l=document.getElementById('apple-icon');if(l)l.setAttribute('href','" + appIconHref("light") + "')}" +
   "}catch(e){}})()";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -51,7 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ru" className={fontVariables} suppressHydrationWarning>
       <head>
         <style dangerouslySetInnerHTML={{ __html: themeCss }} />
-        <link id="apple-icon" rel="apple-touch-icon" href={appIconHref("dark")} suppressHydrationWarning />
+        <link id="apple-icon" rel="apple-touch-icon" href={APP_ICON_HREF} suppressHydrationWarning />
         <script dangerouslySetInnerHTML={{ __html: bootScript }} />
       </head>
       <body>

@@ -6,7 +6,7 @@
  * - остальное своё (иконки, манифест): кэш сразу, обновление в фоне.
  */
 const CACHE = "structura-v1";
-const SHELL = ["/", "/manifest.webmanifest", "/icon.svg", "/icons/day-dark-180.png", "/icons/day-light-180.png"];
+const SHELL = ["/", "/manifest.webmanifest", "/icon.svg", "/icons/app-180.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(

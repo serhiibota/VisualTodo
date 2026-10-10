@@ -2,7 +2,7 @@
 
 import { BottomSheet } from "@/components/sheet/BottomSheet";
 import { Icon } from "@/components/ui/Icon";
-import { APP_ICONS, appIconHref, DISPLAY_FONTS, UI_FONTS } from "@/lib/appearance";
+import { DISPLAY_FONTS, UI_FONTS } from "@/lib/appearance";
 import { DAY_BOUNDS_PRESETS, MIN_DAY_LENGTH } from "@/lib/constants";
 import { formatClock, formatDuration } from "@/lib/time";
 import type { DayBounds } from "@/store/types";
@@ -52,39 +52,6 @@ function SettingsContent() {
         on={appearance.showProjectBar}
         onChange={(showProjectBar) => setAppearance({ showProjectBar })}
       />
-
-      <SectionTitle>Иконка приложения</SectionTitle>
-      <div className="grid grid-cols-2 gap-2">
-        {APP_ICONS.map((ic) => {
-          const on = appearance.appIcon === ic.key;
-          return (
-            <button
-              key={ic.key}
-              type="button"
-              onClick={() => setAppearance({ appIcon: ic.key })}
-              aria-pressed={on}
-              className="flex items-center gap-3 rounded-2xl bg-hover p-3 text-left"
-              style={on ? { boxShadow: "inset 0 0 0 1.5px rgb(var(--c-strong))" } : undefined}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={appIconHref(ic.key)}
-                alt=""
-                width={48}
-                height={48}
-                className="h-12 w-12 shrink-0 rounded-[11px]"
-                style={{ boxShadow: "0 0 0 1px rgb(var(--c-line))" }}
-              />
-              <span className="min-w-0 flex-1 text-[15px] font-medium text-ink">{ic.label}</span>
-            </button>
-          );
-        })}
-      </div>
-      <p className="mt-2 text-[12px] leading-5 text-muted">
-        iPhone запоминает иконку в момент «Поделиться → На экран «Домой»». Чтобы сменить уже добавленную — удалите её
-        с экрана и добавьте снова. Приложение работает и без интернета: после первого открытия всё нужное хранится
-        в телефоне.
-      </p>
 
       <SectionTitle>Тушь</SectionTitle>
       <ThemeGrid group="ink" current={appearance.theme} onSelect={(theme) => setAppearance({ theme })} />
